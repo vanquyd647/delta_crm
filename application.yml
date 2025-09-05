@@ -96,4 +96,10 @@ app:
     access-ttl-ms: ${JWT_ACCESS_TTL_MS}
     refresh-ttl-ms: ${JWT_REFRESH_TTL_MS}
 
+  # Chatbot configuration: default system prompt and include DB services in system message
+  chat:
+    default-system: "You are a concise dental clinic assistant. Use only the services data provided by the system to answer user queries about services, durations, prices and booking steps. If user asks to book, request service name, preferred date/time, patient name and contact. Keep answers brief and polite."
+    include-services: true
+    include-services-full: true
+
 # Security headers via reverse proxy are recommended (CSP, X-Content-Type-Options, etc.)

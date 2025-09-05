@@ -29,7 +29,7 @@ import java.util.Date;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 
-import dentalbackend.service.EmailService;
+import dentalbackend.infrastructure.email.EmailService;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +40,7 @@ public class AuthService implements AuthUseCase {
     private final StringRedisTemplate redis;
     private final RateLimiterService rateLimiter;
     private final CaptchaVerifier captchaVerifier;
-    private final EmailService emailService; // EmailService remains in service package
+    private final EmailService emailService;
     private final AuthenticationManager authenticationManager;
 
     @Value("${app.base-url:http://localhost:8080}")

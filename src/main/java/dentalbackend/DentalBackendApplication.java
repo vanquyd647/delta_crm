@@ -6,7 +6,8 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 
 @SpringBootApplication
-@ComponentScan(excludeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = "dentalbackend\\.service\\.(ServiceService|PaymentService|PatientRecordService|AuthService|AppointmentService|AdminService|ServiceProfileService|UserService)") )
+// Exclude the old flat "service" package entirely to avoid duplicate @Service beans
+@ComponentScan(excludeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = "dentalbackend\\.service\\..*") )
 public class DentalBackendApplication {
 
     public static void main(String[] args) {
