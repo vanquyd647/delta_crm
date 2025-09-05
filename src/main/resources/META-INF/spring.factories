@@ -1,0 +1,3 @@
+# Register EnvironmentPostProcessor implementations
+org.springframework.boot.env.EnvironmentPostProcessor=dentalbackend.config.DotenvEnvironmentPostProcessor
+

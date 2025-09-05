@@ -1,0 +1,924 @@
+openapi: 3.0.3
+info:
+  title: Dental Backend API
+  version: 1.0.0
+  description: OpenAPI specification for dental clinic backend (services, appointments, payments, users, admin analytics, auth, chat)
+servers:
+  - url: http://localhost:8080
+security:
+  - bearerAuth: []
+paths:
+  /api/services:
+    get:
+      summary: List all services
+      security: []
+      responses:
+        '200':
+          description: List of services
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_ServiceResponseList'
+    post:
+      summary: Create a service (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateServiceRequest'
+      responses:
+        '200':
+          description: Created service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_ServiceResponse'
+  /api/services/{id}:
+    get:
+      summary: Get service by id
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_ServiceResponse'
+    put:
+      summary: Update service (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateServiceRequest'
+      responses:
+        '200':
+          description: Updated service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_ServiceResponse'
+    delete:
+      summary: Delete service (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_String'
+
+  /api/appointments:
+    post:
+      summary: Create appointment (receptionist/admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppointmentRequest'
+      responses:
+        '200':
+          description: Created appointment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Appointment'
+
+  /api/appointments/my:
+    get:
+      summary: Dentist's appointments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_AppointmentList'
+
+  /api/appointments/history:
+    get:
+      summary: Customer appointment history
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Appointment history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_AppointmentList'
+
+  /api/appointments/{id}:
+    put:
+      summary: Update own appointment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Appointment'
+      responses:
+        '200':
+          description: Updated appointment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Appointment'
+    delete:
+      summary: Cancel own appointment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_String'
+
+  /api/appointments/all:
+    get:
+      summary: List all appointments (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: All appointments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_AppointmentList'
+
+  /api/appointments/admin/{id}:
+    put:
+      summary: Admin update appointment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Appointment'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Appointment'
+    delete:
+      summary: Admin delete appointment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_String'
+
+  /api/payments/record:
+    post:
+      summary: Record payment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: appointmentId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: amount
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+        - name: method
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: invoiceNumber
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Payment'
+
+  /api/payments/appointment/{appointmentId}:
+    get:
+      summary: Get payments for appointment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Payments list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_PaymentList'
+
+  /api/payments/{paymentId}:
+    get:
+      summary: Get payment by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Payment'
+
+  /api/users/me:
+    get:
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_UserEntity'
+
+  /api/users/me/preferences:
+    patch:
+      summary: Update current user preferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePreferencesRequest'
+      responses:
+        '200':
+          description: Updated preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_UserEntity'
+
+  /api/users:
+    post:
+      summary: Create user (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserEntity'
+      responses:
+        '200':
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_UserEntity'
+
+  /api/users/{id}:
+    put:
+      summary: Update user (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserEntity'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_UserEntity'
+    delete:
+      summary: Delete user (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_String'
+
+  /api/users/{id}/debt:
+    patch:
+      summary: Update user debt
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: debt
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+      responses:
+        '200':
+          description: Debt updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_UserEntity'
+
+  /api/users/{id}/service-status:
+    patch:
+      summary: Update user service status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: serviceStatus
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Service status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_UserEntity'
+
+  /api/admin/revenue/total:
+    get:
+      summary: Total revenue
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Total revenue amount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_Double'
+
+  /api/admin/revenue/by-day:
+    get:
+      summary: Revenue by day
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Revenue map by date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_RevenueByDay'
+
+  /api/admin/service-usage:
+    get:
+      summary: Service usage counts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Service usage map
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_ServiceUsage'
+
+  /api/auth/register:
+    post:
+      summary: Register new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_String'
+
+  /api/auth/login:
+    post:
+      summary: Login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: JWT tokens
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_JwtResponse'
+
+  /api/chat/generate:
+    post:
+      summary: Generate chat reply
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Chat reply
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+  /api/users/me/profile:
+    get:
+      summary: Get current user's profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_UserProfile'
+    patch:
+      summary: Update current user's profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_UserProfile'
+  /api/users/{id}/role:
+    patch:
+      summary: Change user's role (admin only)
+      description: Invalidate user's refresh tokens after role change so the user must re-authenticate.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: role
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/UserRole'
+      responses:
+        '200':
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_UserEntity'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+    ApiResponse_String:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: string
+    ApiResponse_Double:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: number
+              format: double
+    ServiceResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        price:
+          type: number
+          format: double
+        description:
+          type: string
+        durationMinutes:
+          type: integer
+    ApiResponse_ServiceResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ServiceResponse'
+    ApiResponse_ServiceResponseList:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ServiceResponse'
+    CreateServiceRequest:
+      type: object
+      required: [name, price, durationMinutes]
+      properties:
+        name:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+        durationMinutes:
+          type: integer
+    UpdateServiceRequest:
+      $ref: '#/components/schemas/CreateServiceRequest'
+
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerId:
+          type: integer
+        dentistId:
+          type: integer
+        receptionistId:
+          type: integer
+        status:
+          type: string
+        scheduledTime:
+          type: string
+          format: date-time
+        notes:
+          type: string
+    ApiResponse_Appointment:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Appointment'
+    ApiResponse_AppointmentList:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Appointment'
+
+    CreateAppointmentRequest:
+      type: object
+      required: [customerId, dentistId, scheduledTime]
+      properties:
+        customerId:
+          type: integer
+        dentistId:
+          type: integer
+        scheduledTime:
+          type: string
+          format: date-time
+        notes:
+          type: string
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+        appointmentId:
+          type: integer
+        amount:
+          type: number
+          format: double
+        method:
+          type: string
+        invoiceNumber:
+          type: string
+        paidAt:
+          type: string
+          format: date-time
+    ApiResponse_Payment:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Payment'
+    ApiResponse_PaymentList:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Payment'
+
+    UserEntity:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        fullName:
+          type: string
+        emailVerified:
+          type: boolean
+        enabled:
+          type: boolean
+        themePreference:
+          type: string
+        languagePreference:
+          type: string
+        notificationPreference:
+          type: string
+        debt:
+          type: number
+          format: double
+        serviceStatus:
+          type: string
+    ApiResponse_UserEntity:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/UserEntity'
+
+    UpdatePreferencesRequest:
+      type: object
+      properties:
+        themePreference:
+          type: string
+        languagePreference:
+          type: string
+        notificationPreference:
+          type: string
+
+    RegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        captchaToken:
+          type: string
+    LoginRequest:
+      type: object
+      properties:
+        usernameOrEmail:
+          type: string
+        password:
+          type: string
+    JwtResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+    ApiResponse_JwtResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/JwtResponse'
+
+    ChatRequest:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        system:
+          type: string
+    ChatResponse:
+      type: object
+      properties:
+        reply:
+          type: string
+
+    ApiResponse_RevenueByDay:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              additionalProperties:
+                type: number
+                format: double
+    ApiResponse_ServiceUsage:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              additionalProperties:
+                type: integer
+    UserProfileResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        phone:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        gender:
+          type: string
+        address:
+          type: string
+        avatarUrl:
+          type: string
+        emergencyContact:
+          type: string
+    UpdateProfileRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        gender:
+          type: string
+        address:
+          type: string
+        avatarUrl:
+          type: string
+        emergencyContact:
+          type: string
+    ApiResponse_UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/UserProfileResponse'
+    UserRole:
+      type: string
+      enum:
+        - CUSTOMER
+        - RECEPTIONIST
+        - DENTIST
+        - ADMIN
+        - PATIENT
