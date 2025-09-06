@@ -78,6 +78,9 @@ public class UserEntity {
     @Column(length = 256)
     private String serviceStatus;
 
+    @Column(length = 512)
+    private String avatarUrl; // store user's avatar/profile image URL (e.g. from Google)
+
     @PrePersist
     protected void onCreate() {
         Instant now = Instant.now();

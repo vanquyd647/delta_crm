@@ -13,14 +13,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -58,63 +58,59 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req,
-                                @RequestParam(defaultValue = "false") boolean saveCookies,
-                                @RequestParam(defaultValue = "false") boolean redirect,
-                                @RequestParam(required = false) String redirectTo,
-                                HttpServletResponse resp) {
+                                  @RequestParam(defaultValue = "false") boolean saveCookies,
+                                  HttpServletResponse resp) {
         var loginResponse = authService.login(req);
 
-        // Fetch user info (username/email/role) for response/redirect
+        // Fetch user info (username/email/role) for redirect
         UserEntity user = userUseCase.findByUsernameOrEmail(req.getUsernameOrEmail()).orElse(null);
 
-        // Set cookies if configured or requested
+        // Always set cross-origin cookies for redirect flow when configured
         if (setCookies || saveCookies) {
-            if (redirect) {
-                // For cross-origin redirect, use SameSite=None and Secure
-                addCrossOriginCookie(resp, "access_token", loginResponse.getAccessToken(), 3600);
-                addCrossOriginCookie(resp, "refresh_token", loginResponse.getRefreshToken(), 259200);
-            } else {
-                addCookie(resp, "access_token", loginResponse.getAccessToken(), 3600);
-                addCookie(resp, "refresh_token", loginResponse.getRefreshToken(), 259200);
-            }
+            addCrossOriginCookie(resp, "access_token", loginResponse.getAccessToken(), 3600);
+            addCrossOriginCookie(resp, "refresh_token", loginResponse.getRefreshToken(), 259200);
         }
 
         String role = user != null && user.getRole() != null ? "ROLE_" + user.getRole().name() : null;
         String email = user != null ? user.getEmail() : null;
         String username = user != null ? user.getUsername() : req.getUsernameOrEmail();
 
-        if (redirect) {
-            String base = frontendUrl + oauthSuccessPath;
-            String target = (redirectTo != null && !redirectTo.isBlank()) ? redirectTo : base;
-            try {
-                String redirectUrl = target +
-                        "?access_token=" + URLEncoder.encode(loginResponse.getAccessToken(), StandardCharsets.UTF_8.name()) +
-                        "&refresh_token=" + URLEncoder.encode(loginResponse.getRefreshToken(), StandardCharsets.UTF_8.name()) +
-                        "&token_type=" + URLEncoder.encode(loginResponse.getTokenType(), StandardCharsets.UTF_8.name()) +
-                        "&username=" + URLEncoder.encode(username, StandardCharsets.UTF_8.name()) +
-                        (email != null ? "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8.name()) : "") +
-                        (role != null ? "&role=" + URLEncoder.encode(role, StandardCharsets.UTF_8.name()) : "") +
-                        "&cookies_set=" + setCookies;
+        // Always redirect to frontend OAuth success path with same params as OAuth2 flow
+        try {
+            String redirectUrl = frontendUrl + oauthSuccessPath +
+                    "?access_token=" + URLEncoder.encode(loginResponse.getAccessToken(), StandardCharsets.UTF_8) +
+                    "&refresh_token=" + URLEncoder.encode(loginResponse.getRefreshToken(), StandardCharsets.UTF_8) +
+                    "&token_type=" + URLEncoder.encode(loginResponse.getTokenType(), StandardCharsets.UTF_8) +
+                    "&username=" + URLEncoder.encode(username, StandardCharsets.UTF_8) +
+                    (email != null ? "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8) : "") +
+                    (role != null ? "&role=" + URLEncoder.encode(role, StandardCharsets.UTF_8) : "") +
+                    "&cookies_set=" + setCookies +
+                    "&avatar_url=" + URLEncoder.encode((user != null && user.getAvatarUrl() != null) ? user.getAvatarUrl() : "", StandardCharsets.UTF_8);
 
-                HttpHeaders headers = new HttpHeaders();
-                headers.add("Location", redirectUrl);
-                return new ResponseEntity<>(headers, HttpStatus.FOUND);
-            } catch (UnsupportedEncodingException e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Redirect encoding failed"));
+            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+            String acceptHeader = request.getHeader("Accept");
+            boolean isApiClient = acceptHeader != null && acceptHeader.contains("application/json");
+
+            if (!isApiClient && saveCookies) {
+                resp.sendRedirect(redirectUrl);
+                return ResponseEntity.status(HttpStatus.FOUND).build();
             }
-        }
 
-        Map<String, Object> tokenMap = Map.of(
+            Map<String, Object> tokenMap = Map.of(
                 "access_token", loginResponse.getAccessToken(),
                 "refresh_token", loginResponse.getRefreshToken(),
                 "token_type", loginResponse.getTokenType(),
                 "username", username,
                 "email", email,
                 "role", role,
-                "cookies_set", setCookies
-        );
+                "cookies_set", setCookies,
+                "avatar_url", user != null && user.getAvatarUrl() != null ? user.getAvatarUrl() : ""
+            );
 
-        return ResponseEntity.ok(tokenMap);
+            return ResponseEntity.ok(tokenMap);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Redirect failed: " + e.getMessage()));
+        }
     }
 
     @PostMapping("/refresh")
@@ -162,7 +158,7 @@ public class AuthController {
     public ApiResponse<?> logout(@RequestBody(required = false) RefreshRequest req,
                                  HttpServletRequest request,
                                  HttpServletResponse resp) {
-        String refreshToken = null;
+        String refreshToken;
 
         if (req != null && req.getRefreshToken() != null) {
             refreshToken = req.getRefreshToken();

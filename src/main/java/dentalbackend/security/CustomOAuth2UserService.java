@@ -3,7 +3,11 @@ package dentalbackend.security;
 import dentalbackend.domain.AuthProvider;
 import dentalbackend.domain.UserEntity;
 import dentalbackend.domain.UserRole;
+import dentalbackend.domain.UserPreferences;
+import dentalbackend.domain.UserProfile;
 import dentalbackend.repository.UserRepository;
+import dentalbackend.repository.UserProfileRepository;
+import dentalbackend.repository.UserPreferencesRepository;
 import dentalbackend.application.user.UserUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +25,8 @@ import java.util.UUID;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepo;
+    private final UserProfileRepository profileRepo;
+    private final UserPreferencesRepository preferencesRepo;
     private final UserUseCase userUseCase;
 
     @Override
@@ -31,28 +37,26 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
             log.debug("OAuth2 user attributes: {}", attrs);
 
-            // Thuộc tính chuẩn của Google OIDC
+            // Standard Google OIDC attributes
             String sub = (String) attrs.get("sub");
             String email = (String) attrs.get("email");
             String name = (String) attrs.getOrDefault("name", email);
             Boolean emailVerified = (Boolean) attrs.getOrDefault("email_verified", Boolean.FALSE);
+            String picture = attrs.get("picture") != null ? String.valueOf(attrs.get("picture")) : null;
 
             if (email == null || email.isBlank()) {
-                throw new IllegalStateException("Google không trả về email (cần scope: openid, email)");
+                throw new IllegalStateException("Google did not return email (require openid email scope)");
             }
 
             log.info("Processing OAuth2 user with email: {}", email);
 
-            // Tìm theo email (link tài khoản theo email)
+            // Find or create user by email
             UserEntity user = userRepo.findByEmail(email).orElse(null);
             if (user == null) {
                 log.info("Creating new user for OAuth2 login: {}", email);
 
-                // Tạo username từ local-part của email, đảm bảo duy nhất
                 String base = email.substring(0, email.indexOf('@')).replaceAll("[^a-zA-Z0-9._-]", "");
                 String username = ensureUniqueUsername(base);
-
-                // Tạo mật khẩu ngẫu nhiên (vì createUser yêu cầu rawPassword)
                 String randomPassword = "google_" + UUID.randomUUID();
 
                 user = userUseCase.createUser(username, email, randomPassword, UserRole.CUSTOMER);
@@ -60,13 +64,57 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 log.info("Found existing user for OAuth2 login: {}", email);
             }
 
-            // Link thông tin OAuth vào user
+            // Link OAuth info and update avatar if present
             user.setProvider(AuthProvider.GOOGLE);
             user.setProviderId(sub);
             if (name != null && !name.isBlank()) user.setFullName(name);
+            if (picture != null && !picture.isBlank()) user.setAvatarUrl(picture);
             user.setEmailVerified(Boolean.TRUE.equals(emailVerified) || user.isEmailVerified());
             user.setEnabled(true);
-            userRepo.save(user);
+
+            // Save user and use a final reference for subsequent lambda usage
+            UserEntity savedUser = userRepo.save(user);
+
+            // Ensure and sync profile using savedUser (final)
+            try {
+                profileRepo.findByUser(savedUser).ifPresentOrElse(p -> {
+                    if ((p.getAvatarUrl() == null || p.getAvatarUrl().isBlank()) && savedUser.getAvatarUrl() != null && !savedUser.getAvatarUrl().isBlank()) {
+                        p.setAvatarUrl(savedUser.getAvatarUrl());
+                        profileRepo.save(p);
+                    }
+                }, () -> {
+                    UserProfile p = UserProfile.builder()
+                            .user(savedUser)
+                            .phone(null)
+                            .birthDate(null)
+                            .gender(null)
+                            .address(null)
+                            .avatarUrl(savedUser.getAvatarUrl())
+                            .emergencyContact(null)
+                            .build();
+                    profileRepo.save(p);
+                });
+            } catch (Exception ex) {
+                log.warn("Failed to sync user profile for {}: {}", savedUser.getUsername(), ex.getMessage());
+            }
+
+            // Ensure preferences
+            try {
+                preferencesRepo.findByUser(savedUser).ifPresentOrElse(pref -> {
+                    // nothing
+                }, () -> {
+                    UserPreferences pref = UserPreferences.builder()
+                            .user(savedUser)
+                            .themePreference(savedUser.getThemePreference() != null ? savedUser.getThemePreference() : "light")
+                            .languagePreference(savedUser.getLanguagePreference() != null ? savedUser.getLanguagePreference() : "vi")
+                            .notificationPreference(savedUser.getNotificationPreference() != null ? savedUser.getNotificationPreference() : "EMAIL")
+                            .timezone(null)
+                            .build();
+                    preferencesRepo.save(pref);
+                });
+            } catch (Exception ex) {
+                log.warn("Failed to sync user preferences for {}: {}", savedUser.getUsername(), ex.getMessage());
+            }
 
             log.info("OAuth2 user processing completed for: {}", user.getUsername());
 

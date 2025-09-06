@@ -2,8 +2,12 @@ package dentalbackend.application.user.impl;
 
 import dentalbackend.application.user.UserUseCase;
 import dentalbackend.domain.UserEntity;
+import dentalbackend.domain.UserPreferences;
+import dentalbackend.domain.UserProfile;
 import dentalbackend.domain.UserRole;
 import dentalbackend.dto.UpdatePreferencesRequest;
+import dentalbackend.repository.UserPreferencesRepository;
+import dentalbackend.repository.UserProfileRepository;
 import dentalbackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,6 +20,8 @@ import java.util.Optional;
 public class UserServiceImpl implements UserUseCase {
     private final UserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
+    private final UserProfileRepository profileRepo;
+    private final UserPreferencesRepository preferencesRepo;
 
     @Override
     public UserEntity createUser(String username, String email, String rawPassword, UserRole role) {
@@ -40,7 +46,32 @@ public class UserServiceImpl implements UserUseCase {
                 .serviceStatus(null)
                 .build();
 
-        return userRepo.save(u);
+        // Save user first to obtain id
+        UserEntity saved = userRepo.save(u);
+
+        // Create empty profile if not exists
+        UserProfile profile = UserProfile.builder()
+                .user(saved)
+                .phone(null)
+                .birthDate(null)
+                .gender(null)
+                .address(null)
+                .avatarUrl(saved.getAvatarUrl())
+                .emergencyContact(null)
+                .build();
+        profileRepo.save(profile);
+
+        // Create preferences with sensible defaults
+        UserPreferences prefs = UserPreferences.builder()
+                .user(saved)
+                .themePreference(saved.getThemePreference() != null ? saved.getThemePreference() : "light")
+                .languagePreference(saved.getLanguagePreference() != null ? saved.getLanguagePreference() : "vi")
+                .notificationPreference(saved.getNotificationPreference() != null ? saved.getNotificationPreference() : "EMAIL")
+                .timezone(null)
+                .build();
+        preferencesRepo.save(prefs);
+
+        return saved;
     }
 
     @Override
@@ -64,7 +95,50 @@ public class UserServiceImpl implements UserUseCase {
 
     @Override
     public UserEntity save(UserEntity user) {
-        return userRepo.save(user);
+        UserEntity saved = userRepo.save(user);
+
+        // Sync or create profile
+        try {
+            profileRepo.findByUser(saved).ifPresentOrElse(p -> {
+                if ((p.getAvatarUrl() == null || p.getAvatarUrl().isBlank()) && saved.getAvatarUrl() != null && !saved.getAvatarUrl().isBlank()) {
+                    p.setAvatarUrl(saved.getAvatarUrl());
+                    profileRepo.save(p);
+                }
+            }, () -> {
+                UserProfile profile = UserProfile.builder()
+                        .user(saved)
+                        .phone(null)
+                        .birthDate(null)
+                        .gender(null)
+                        .address(null)
+                        .avatarUrl(saved.getAvatarUrl())
+                        .emergencyContact(null)
+                        .build();
+                profileRepo.save(profile);
+            });
+        } catch (Exception ex) {
+            // best-effort sync; log if logger available
+        }
+
+        // Sync or create preferences
+        try {
+            preferencesRepo.findByUser(saved).ifPresentOrElse(pref -> {
+                // nothing for now
+            }, () -> {
+                UserPreferences pref = UserPreferences.builder()
+                        .user(saved)
+                        .themePreference(saved.getThemePreference() != null ? saved.getThemePreference() : "light")
+                        .languagePreference(saved.getLanguagePreference() != null ? saved.getLanguagePreference() : "vi")
+                        .notificationPreference(saved.getNotificationPreference() != null ? saved.getNotificationPreference() : "EMAIL")
+                        .timezone(null)
+                        .build();
+                preferencesRepo.save(pref);
+            });
+        } catch (Exception ex) {
+            // best-effort
+        }
+
+        return saved;
     }
 
     @Override
@@ -91,4 +165,3 @@ public class UserServiceImpl implements UserUseCase {
         userRepo.deleteById(userId);
     }
 }
-

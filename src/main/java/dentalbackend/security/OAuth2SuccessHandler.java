@@ -1,6 +1,5 @@
 package dentalbackend.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,6 +14,10 @@ import dentalbackend.security.jwt.JwtUtil;
 import dentalbackend.domain.AuthProvider;
 import dentalbackend.domain.UserEntity;
 import dentalbackend.repository.UserRepository;
+import dentalbackend.repository.UserProfileRepository;
+import dentalbackend.repository.UserPreferencesRepository;
+import dentalbackend.domain.UserProfile;
+import dentalbackend.domain.UserPreferences;
 import dentalbackend.domain.UserRole;
 import dentalbackend.application.user.UserUseCase;
 
@@ -31,10 +34,11 @@ import java.util.UUID;
 public class OAuth2SuccessHandler extends org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler {
 
     private final UserRepository userRepo;
+    private final UserProfileRepository profileRepo;
+    private final UserPreferencesRepository preferencesRepo;
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate redis;
     private final UserUseCase userUseCase;
-    private final ObjectMapper om = new ObjectMapper();
 
     @Value("${app.jwt.refresh-ttl-ms:259200000}") // 3 ngày
     private long refreshTtlMs;
@@ -82,6 +86,13 @@ public class OAuth2SuccessHandler extends org.springframework.security.web.authe
                 newUser.setEmailVerified(true);
                 newUser.setEnabled(true);
 
+                // Save avatar if provided by Google (attribute key: picture)
+                Object pic = principal.getAttributes().get("picture");
+                if (pic != null) {
+                    String avatar = String.valueOf(pic);
+                    newUser.setAvatarUrl(avatar);
+                }
+
                 return userRepo.save(newUser);
             });
 
@@ -92,9 +103,55 @@ public class OAuth2SuccessHandler extends org.springframework.security.web.authe
                 if (name != null && !name.isBlank()) {
                     user.setFullName(name);
                 }
+                // Update avatar on existing user if available
+                Object pic = principal.getAttributes().get("picture");
+                if (pic != null) {
+                    user.setAvatarUrl(String.valueOf(pic));
+                }
                 user.setEmailVerified(true);
                 user.setEnabled(true);
                 userRepo.save(user);
+            }
+
+            // Ensure user_profiles exists and avatar is synced
+            try {
+                profileRepo.findByUser(user).ifPresentOrElse(p -> {
+                    if ((p.getAvatarUrl() == null || p.getAvatarUrl().isBlank()) && user.getAvatarUrl() != null && !user.getAvatarUrl().isBlank()) {
+                        p.setAvatarUrl(user.getAvatarUrl());
+                        profileRepo.save(p);
+                    }
+                }, () -> {
+                    UserProfile p = UserProfile.builder()
+                            .user(user)
+                            .phone(null)
+                            .birthDate(null)
+                            .gender(null)
+                            .address(null)
+                            .avatarUrl(user.getAvatarUrl())
+                            .emergencyContact(null)
+                            .build();
+                    profileRepo.save(p);
+                });
+            } catch (Exception ex) {
+                log.warn("Failed to sync user profile for {}: {}", user.getUsername(), ex.getMessage());
+            }
+
+            // Ensure user_preferences exists
+            try {
+                preferencesRepo.findByUser(user).ifPresentOrElse(pref -> {
+                    // nothing to update by default here
+                }, () -> {
+                    UserPreferences pref = UserPreferences.builder()
+                            .user(user)
+                            .themePreference(user.getThemePreference() != null ? user.getThemePreference() : "light")
+                            .languagePreference(user.getLanguagePreference() != null ? user.getLanguagePreference() : "vi")
+                            .notificationPreference(user.getNotificationPreference() != null ? user.getNotificationPreference() : "EMAIL")
+                            .timezone(null)
+                            .build();
+                    preferencesRepo.save(pref);
+                });
+            } catch (Exception ex) {
+                log.warn("Failed to sync user preferences for {}: {}", user.getUsername(), ex.getMessage());
             }
 
             // Generate tokens
@@ -131,7 +188,8 @@ public class OAuth2SuccessHandler extends org.springframework.security.web.authe
                     "&username=" + URLEncoder.encode(user.getUsername(), StandardCharsets.UTF_8) +
                     "&email=" + URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8) +
                     "&role=" + URLEncoder.encode(user.getRole().name(), StandardCharsets.UTF_8) +
-                    "&cookies_set=" + setCookies;
+                    "&cookies_set=" + setCookies +
+                    "&avatar_url=" + URLEncoder.encode(user.getAvatarUrl() == null ? "" : user.getAvatarUrl(), StandardCharsets.UTF_8);
 
             log.info("Redirecting OAuth2 user to: {}", redirectUrl);
             resp.sendRedirect(redirectUrl);
