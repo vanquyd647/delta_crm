@@ -1,5 +1,5 @@
 // Add missing service class (was mistakenly placed under resources).
-package dentalbackend.service;
+package dentalbackend.legacy_service_backup;
 
 import dentalbackend.application.userprofile.UserProfileUseCase;
 import dentalbackend.domain.UserEntity;

@@ -1,4 +1,4 @@
-package dentalbackend.service;
+package dentalbackend.legacy_service_backup;
 
 /**
  * Legacy placeholder. Appointment logic has been moved to application.appointment.impl.AppointmentService

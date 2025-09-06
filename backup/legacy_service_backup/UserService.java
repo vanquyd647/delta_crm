@@ -1,15 +1,14 @@
-package dentalbackend.service;
+package dentalbackend.legacy_service_backup;
 
 import dentalbackend.application.user.UserUseCase;
 import dentalbackend.domain.UserEntity;
 import dentalbackend.domain.UserRole;
 import dentalbackend.dto.UpdatePreferencesRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-@Service
+// Legacy backup - intentionally not a Spring bean. Use application layer implementations instead.
 @RequiredArgsConstructor
 public class UserService {
     private final UserUseCase userUseCase;

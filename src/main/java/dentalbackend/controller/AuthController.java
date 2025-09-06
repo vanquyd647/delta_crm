@@ -4,17 +4,25 @@ import dentalbackend.dto.LoginRequest;
 import dentalbackend.dto.RefreshRequest;
 import dentalbackend.dto.RegisterRequest;
 import dentalbackend.application.auth.AuthUseCase;
+import dentalbackend.application.user.UserUseCase;
 import dentalbackend.common.ApiResponse;
+import dentalbackend.domain.UserEntity;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @RestController
@@ -23,9 +31,16 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthUseCase authService;
+    private final UserUseCase userUseCase;
 
     @Value("${app.auth.set-cookies:true}")
     private boolean setCookies;
+
+    @Value("${app.frontend.url:http://localhost:3000}")
+    private String frontendUrl;
+
+    @Value("${app.frontend.oauth-success-path:/auth/oauth-success}")
+    private String oauthSuccessPath;
 
     @PostMapping("/register")
     public ApiResponse<?> register(@Valid @RequestBody RegisterRequest req) {
@@ -42,19 +57,64 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ApiResponse<?> login(@Valid @RequestBody LoginRequest req,
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req,
                                 @RequestParam(defaultValue = "false") boolean saveCookies,
+                                @RequestParam(defaultValue = "false") boolean redirect,
+                                @RequestParam(required = false) String redirectTo,
                                 HttpServletResponse resp) {
         var loginResponse = authService.login(req);
 
-        // ✅ Set cookies nếu được yêu cầu hoặc config enable
+        // Fetch user info (username/email/role) for response/redirect
+        UserEntity user = userUseCase.findByUsernameOrEmail(req.getUsernameOrEmail()).orElse(null);
+
+        // Set cookies if configured or requested
         if (setCookies || saveCookies) {
-            addCookie(resp, "access_token", loginResponse.getAccessToken(), 3600);
-            addCookie(resp, "refresh_token", loginResponse.getRefreshToken(), 259200);
+            if (redirect) {
+                // For cross-origin redirect, use SameSite=None and Secure
+                addCrossOriginCookie(resp, "access_token", loginResponse.getAccessToken(), 3600);
+                addCrossOriginCookie(resp, "refresh_token", loginResponse.getRefreshToken(), 259200);
+            } else {
+                addCookie(resp, "access_token", loginResponse.getAccessToken(), 3600);
+                addCookie(resp, "refresh_token", loginResponse.getRefreshToken(), 259200);
+            }
         }
 
-        // ✅ Chỉ cần data, không cần message
-        return ApiResponse.ok(loginResponse);
+        String role = user != null && user.getRole() != null ? "ROLE_" + user.getRole().name() : null;
+        String email = user != null ? user.getEmail() : null;
+        String username = user != null ? user.getUsername() : req.getUsernameOrEmail();
+
+        if (redirect) {
+            String base = frontendUrl + oauthSuccessPath;
+            String target = (redirectTo != null && !redirectTo.isBlank()) ? redirectTo : base;
+            try {
+                String redirectUrl = target +
+                        "?access_token=" + URLEncoder.encode(loginResponse.getAccessToken(), StandardCharsets.UTF_8.name()) +
+                        "&refresh_token=" + URLEncoder.encode(loginResponse.getRefreshToken(), StandardCharsets.UTF_8.name()) +
+                        "&token_type=" + URLEncoder.encode(loginResponse.getTokenType(), StandardCharsets.UTF_8.name()) +
+                        "&username=" + URLEncoder.encode(username, StandardCharsets.UTF_8.name()) +
+                        (email != null ? "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8.name()) : "") +
+                        (role != null ? "&role=" + URLEncoder.encode(role, StandardCharsets.UTF_8.name()) : "") +
+                        "&cookies_set=" + setCookies;
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.add("Location", redirectUrl);
+                return new ResponseEntity<>(headers, HttpStatus.FOUND);
+            } catch (UnsupportedEncodingException e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Redirect encoding failed"));
+            }
+        }
+
+        Map<String, Object> tokenMap = Map.of(
+                "access_token", loginResponse.getAccessToken(),
+                "refresh_token", loginResponse.getRefreshToken(),
+                "token_type", loginResponse.getTokenType(),
+                "username", username,
+                "email", email,
+                "role", role,
+                "cookies_set", setCookies
+        );
+
+        return ResponseEntity.ok(tokenMap);
     }
 
     @PostMapping("/refresh")
@@ -269,6 +329,17 @@ public class AuthController {
         cookie.setHttpOnly(true);
         cookie.setMaxAge(0);
         cookie.setPath("/");
+        resp.addCookie(cookie);
+    }
+
+    // New helper for cross-origin cookies
+    private void addCrossOriginCookie(HttpServletResponse resp, String name, String value, int maxAgeSeconds) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setHttpOnly(true);
+        cookie.setMaxAge(maxAgeSeconds);
+        cookie.setPath("/");
+        cookie.setSecure(true);
+        cookie.setAttribute("SameSite", "None");
         resp.addCookie(cookie);
     }
 }

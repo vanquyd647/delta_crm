@@ -1,4 +1,4 @@
-package dentalbackend.service;
+package dentalbackend.legacy_service_backup;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;

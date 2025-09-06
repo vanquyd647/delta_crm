@@ -21,12 +21,18 @@ public class UserController {
 
     @GetMapping("/me")
     public ApiResponse<?> me(@AuthenticationPrincipal UserDetails principal) {
+        if (principal == null) {
+            return ApiResponse.error("Unauthenticated: please provide a valid Authorization Bearer token");
+        }
         return ApiResponse.ok(userService.findByUsernameOrEmail(principal.getUsername()));
     }
 
     @PatchMapping("/me/preferences")
     public ApiResponse<?> updatePreferences(@AuthenticationPrincipal UserDetails principal,
                                             @RequestBody UpdatePreferencesRequest req) {
+        if (principal == null) {
+            return ApiResponse.error("Unauthenticated: please provide a valid Authorization Bearer token");
+        }
         var user = userService.findByUsernameOrEmail(principal.getUsername()).orElseThrow();
         if (req.getThemePreference() != null) user.setThemePreference(req.getThemePreference());
         if (req.getLanguagePreference() != null) user.setLanguagePreference(req.getLanguagePreference());

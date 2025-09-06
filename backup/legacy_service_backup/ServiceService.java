@@ -1,4 +1,4 @@
-package dentalbackend.service;
+package dentalbackend.legacy_service_backup;
 
 import dentalbackend.application.service.ServiceUseCase;
 import dentalbackend.dto.CreateServiceRequest;

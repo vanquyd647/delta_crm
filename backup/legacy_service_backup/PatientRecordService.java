@@ -1,4 +1,4 @@
-package dentalbackend.service;
+package dentalbackend.legacy_service_backup;
 
 /**
  * Legacy placeholder. PatientRecordService implementation has been moved to
