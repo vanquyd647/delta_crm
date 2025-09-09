@@ -76,7 +76,7 @@ public class AuthService implements AuthUseCase {
 
         String token = UUID.randomUUID().toString();
         redis.opsForValue().set("verify:" + token, u.getEmail(), Duration.ofHours(24));
-        String link = appBaseUrl + "/api/auth/verify?token=" + token;
+        String link = appBaseUrl + "/api/auth/verify-page?token=" + token;
         emailService.send(u.getEmail(), "Xác thực email", "Nhấp để xác thực: " + link);
     }
 
@@ -185,5 +185,49 @@ public class AuthService implements AuthUseCase {
             }
         }
         redis.delete(setKey);
+    }
+
+    @Override
+    public void requestPasswordReset(String email) {
+        var userOpt = userUseCase.findByEmail(email);
+        if (userOpt.isPresent()) {
+            String token = UUID.randomUUID().toString();
+            // Store the token with a 24-hour expiration
+            redis.opsForValue().set("resetpw:" + token, email, Duration.ofHours(24));
+            // Create reset link for HTML form
+            String resetLink = appBaseUrl + "/api/auth/reset-password-page?token=" + token;
+            // Send email with reset link
+            emailService.send(
+                email,
+                "Password Reset Request",
+                "To reset your password, click the link below:\n" + resetLink + 
+                "\n\nIf you didn't request this, please ignore this email."
+            );
+        }
+        // Don't reveal whether the email exists or not (security best practice)
+    }
+
+    @Override
+    public void resetPassword(String token, String newPassword) {
+        String email = redis.opsForValue().get("resetpw:" + token);
+        if (!StringUtils.hasText(email)) throw new RuntimeException("Token invalid/expired");
+        var userOpt = userUseCase.findByEmail(email);
+        var user = userOpt.orElseThrow();
+        user.setPasswordHash(encoder.encode(newPassword));
+        userUseCase.save(user);
+        redis.delete("resetpw:" + token);
+    }
+
+    public String getEmailForResetToken(String token) {
+        String key = "resetpw:" + token;
+        try {
+            String value = redis.opsForValue().get(key);
+            System.out.println("[DEBUG] Redis host: " + System.getenv("REDIS_HOST") + ", port: " + System.getenv("REDIS_PORT"));
+            System.out.println("[DEBUG] Reading key: " + key + ", value: " + value);
+            return value;
+        } catch (Exception e) {
+            System.out.println("[ERROR] Exception reading Redis key: " + key + ", error: " + e.getMessage());
+            return null;
+        }
     }
 }

@@ -1,8 +1,10 @@
 package dentalbackend.controller;
 
+import dentalbackend.dto.ForgotPasswordRequest;
 import dentalbackend.dto.LoginRequest;
 import dentalbackend.dto.RefreshRequest;
 import dentalbackend.dto.RegisterRequest;
+import dentalbackend.dto.ResetPasswordRequest;
 import dentalbackend.application.auth.AuthUseCase;
 import dentalbackend.application.user.UserUseCase;
 import dentalbackend.common.ApiResponse;
@@ -47,6 +49,19 @@ public class AuthController {
         authService.register(req);
         // ✅ Sửa: message trước, data sau
         return ApiResponse.ok("Registered. Please check your email to verify.", null);
+    }
+
+    @PostMapping("/forgot-password")
+    public ApiResponse<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
+        authService.requestPasswordReset(req.getEmail());
+        // For security reasons, don't reveal if the email exists or not
+        return ApiResponse.ok("If your email is registered, you will receive a password reset link.", null);
+    }
+
+    @PostMapping("/reset-password")
+    public ApiResponse<?> resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
+        authService.resetPassword(req.getToken(), req.getNewPassword());
+        return ApiResponse.ok("Password has been reset successfully. You can now log in with your new password.", null);
     }
 
     @GetMapping("/verify")
@@ -205,6 +220,8 @@ public class AuthController {
     public ApiResponse<?> clearCookies(HttpServletResponse resp) {
         clearCookie(resp, "access_token");
         clearCookie(resp, "refresh_token");
+        clearCookie(resp, "JSESSIONID");
+
         // ✅ Sửa: message trước, data sau
         return ApiResponse.ok("Cookies cleared", null);
     }
@@ -337,5 +354,164 @@ public class AuthController {
         cookie.setSecure(true);
         cookie.setAttribute("SameSite", "None");
         resp.addCookie(cookie);
+    }
+
+    @GetMapping("/verify-page")
+    public void verifyPage(@RequestParam String token, HttpServletResponse response) {
+        response.setContentType("text/html;charset=UTF-8");
+        String html;
+        try {
+            authService.verifyEmail(token);
+            html = """
+                <!DOCTYPE html>
+                <html lang='en'>
+                <head>
+                    <meta charset='UTF-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                    <title>Email Verified</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+                        .container { max-width: 400px; margin: 80px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 32px; text-align: center; }
+                        .success { color: #2e7d32; font-size: 2em; margin-bottom: 16px; }
+                        .icon { font-size: 3em; color: #43a047; margin-bottom: 16px; }
+                        .btn { display: inline-block; margin-top: 24px; padding: 10px 24px; background: #43a047; color: #fff; border: none; border-radius: 4px; text-decoration: none; font-size: 1em; }
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='icon'>✅</div>
+                        <div class='success'>Email Verified!</div>
+                        <div>Your email has been successfully verified.<br>Please return to the login page.</div>
+                        <a class='btn' href='http://localhost:3000/'>Go to Login</a>
+                    </div>
+                </body>
+                </html>
+            """;
+        } catch (Exception e) {
+            html = """
+                <!DOCTYPE html>
+                <html lang='en'>
+                <head>
+                    <meta charset='UTF-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                    <title>Verification Failed</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+                        .container { max-width: 400px; margin: 80px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 32px; text-align: center; }
+                        .error { color: #c62828; font-size: 2em; margin-bottom: 16px; }
+                        .icon { font-size: 3em; color: #c62828; margin-bottom: 16px; }
+                        .btn { display: inline-block; margin-top: 24px; padding: 10px 24px; background: #c62828; color: #fff; border: none; border-radius: 4px; text-decoration: none; font-size: 1em; }
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='icon'>❌</div>
+                        <div class='error'>Verification Failed</div>
+                        <div>Sorry, your email verification link is invalid or expired.<br>Please request a new verification email.</div>
+                        <a class='btn' href='" + frontendUrl + "/auth/register'>Register Again</a>
+                    </div>
+                </body>
+                </html>
+            """;
+        }
+        try {
+            response.getWriter().write(html);
+        } catch (Exception ex) {
+            // fallback: do nothing
+        }
+    }
+
+    @GetMapping("/reset-password-page")
+    public void resetPasswordPage(@RequestParam String token, HttpServletResponse response) {
+        response.setContentType("text/html;charset=UTF-8");
+        String email = null;
+        try {
+            email = ((dentalbackend.application.auth.impl.AuthService)authService).getEmailForResetToken(token);
+        } catch (Exception ignored) {}
+        String html;
+        if (email != null) {
+            html = """
+                <!DOCTYPE html>
+                <html lang='en'>
+                <head>
+                    <meta charset='UTF-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                    <title>Reset Password</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+                        .container { max-width: 400px; margin: 80px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 32px; text-align: center; }
+                        .title { font-size: 2em; margin-bottom: 16px; color: #1976d2; }
+                        .input { width: 100%; padding: 10px; margin: 12px 0; border-radius: 4px; border: 1px solid #ccc; font-size: 1em; }
+                        .btn { width: 100%; padding: 10px; background: #1976d2; color: #fff; border: none; border-radius: 4px; font-size: 1em; cursor: pointer; margin-top: 16px; }
+                        .msg { margin-top: 16px; font-size: 1em; }
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='title'>Reset Your Password</div>
+                        <form id='resetForm'>
+                            <input type='password' id='newPassword' class='input' placeholder='New Password' required minlength='6'/>
+                            <button type='submit' class='btn'>Reset Password</button>
+                        </form>
+                        <div id='msg' class='msg'></div>
+                    </div>
+                    <script>
+                        const token = new URLSearchParams(window.location.search).get('token');
+                        document.getElementById('resetForm').onsubmit = async function(e) {
+                            e.preventDefault();
+                            const newPassword = document.getElementById('newPassword').value;
+                            const msg = document.getElementById('msg');
+                            msg.textContent = '';
+                            try {
+                                const res = await fetch('/api/auth/reset-password', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ token, newPassword })
+                                });
+                                const data = await res.json();
+                                if (res.ok && data.success) {
+                                    msg.style.color = '#2e7d32';
+                                    msg.textContent = 'Password reset successful! You can now log in.';
+                                } else {
+                                    msg.style.color = '#c62828';
+                                    msg.textContent = data.message || 'Reset failed.';
+                                }
+                            } catch (err) {
+                                msg.style.color = '#c62828';
+                                msg.textContent = 'Error: ' + err;
+                            }
+                        };
+                    </script>
+                </body>
+                </html>
+            """;
+        } else {
+            html = """
+                <!DOCTYPE html>
+                <html lang='en'>
+                <head>
+                    <meta charset='UTF-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                    <title>Reset Password Failed</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+                        .container { max-width: 400px; margin: 80px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 32px; text-align: center; }
+                        .error { color: #c62828; font-size: 2em; margin-bottom: 16px; }
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='error'>Reset Link Invalid or Expired</div>
+                        <div>Please request a new password reset.</div>
+                    </div>
+                </body>
+                </html>
+            """;
+        }
+        try {
+            response.getWriter().write(html);
+        } catch (Exception ex) {
+            // fallback: do nothing
+        }
     }
 }

@@ -13,4 +13,6 @@ public interface AuthUseCase {
     void logout(String refreshToken);
     void invalidateUserRefreshTokens(String username);
     void invalidateUserAccessTokens(String username);
+    void requestPasswordReset(String email);
+    void resetPassword(String token, String newPassword);
 }

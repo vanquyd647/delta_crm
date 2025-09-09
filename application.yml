@@ -102,4 +102,8 @@ app:
     include-services: true
     include-services-full: true
 
+  recaptcha:
+    secret: ${RECAPTCHA_SECRET}
+    min-score: ${RECAPTCHA_MIN_SCORE:0.5}
+
 # Security headers via reverse proxy are recommended (CSP, X-Content-Type-Options, etc.)
