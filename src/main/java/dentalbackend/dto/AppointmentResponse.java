@@ -28,5 +28,8 @@ public class AppointmentResponse {
 
     private Long receptionistId;
     private String receptionistUsername;
-}
 
+    // Service linked to appointment (optional)
+    private Long serviceId;
+    private String serviceName;
+}

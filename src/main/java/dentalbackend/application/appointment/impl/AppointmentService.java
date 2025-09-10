@@ -6,6 +6,9 @@ import dentalbackend.domain.Appointment;
 import dentalbackend.domain.AppointmentStatus;
 import dentalbackend.domain.port.AppointmentPort;
 import dentalbackend.domain.port.UserPort;
+import dentalbackend.domain.port.ServicePort;
+import java.util.List;
+import java.util.stream.Collectors;
 import dentalbackend.dto.CompleteAppointmentRequest;
 import dentalbackend.dto.CreateAppointmentRequest;
 import dentalbackend.dto.AppointmentResponse;
@@ -15,9 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import dentalbackend.domain.UserEntity;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -25,6 +25,7 @@ public class AppointmentService implements AppointmentUseCase {
     private final AppointmentPort repo;
     private final UserPort userRepo;
     private final PatientRecordUseCase patientRecordUseCase;
+    private final ServicePort servicePort;
 
     @Override
     public AppointmentResponse create(CreateAppointmentRequest req, Long receptionistId) {
@@ -36,10 +37,15 @@ public class AppointmentService implements AppointmentUseCase {
         UserEntity receptionist = userRepo.findById(receptionistId)
                 .orElseThrow(() -> new IllegalArgumentException("Receptionist (current user) not found with id: " + receptionistId));
 
+        // Resolve service
+        dentalbackend.domain.Service service = servicePort.findById(req.getServiceId())
+                .orElseThrow(() -> new IllegalArgumentException("Service not found with id: " + req.getServiceId()));
+
         Appointment appt = Appointment.builder()
                 .customer(customer)
                 .dentist(dentist)
                 .receptionist(receptionist)
+                .service(service)
                 .scheduledTime(req.getScheduledTime())
                 .notes(req.getNotes())
                 .status(AppointmentStatus.PENDING)
@@ -78,20 +84,12 @@ public class AppointmentService implements AppointmentUseCase {
     public AppointmentResponse getAppointmentForUser(Long id, UserEntity requester) {
         Appointment appt = repo.findByIdFetch(id).orElseThrow(() -> new IllegalArgumentException("Appointment not found with id: " + id));
 
-        boolean allowed = false;
-        switch (requester.getRole()) {
-            case ADMIN:
-                allowed = true; break;
-            case RECEPTIONIST:
-                allowed = true; break;
-            case DENTIST:
-                allowed = appt.getDentist() != null && appt.getDentist().getId().equals(requester.getId()); break;
-            case CUSTOMER:
-            case PATIENT:
-                allowed = appt.getCustomer() != null && appt.getCustomer().getId().equals(requester.getId()); break;
-            default:
-                allowed = false; break;
-        }
+        boolean allowed = switch (requester.getRole()) {
+            case ADMIN, RECEPTIONIST -> true;
+            case DENTIST -> appt.getDentist() != null && appt.getDentist().getId().equals(requester.getId());
+            case CUSTOMER, PATIENT -> appt.getCustomer() != null && appt.getCustomer().getId().equals(requester.getId());
+            default -> false;
+        };
 
         if (!allowed) throw new IllegalArgumentException("Access denied");
 
@@ -144,6 +142,8 @@ public class AppointmentService implements AppointmentUseCase {
         String dentistUsername = appt.getDentist() != null ? appt.getDentist().getUsername() : null;
         Long receptionistId = appt.getReceptionist() != null ? appt.getReceptionist().getId() : null;
         String receptionistUsername = appt.getReceptionist() != null ? appt.getReceptionist().getUsername() : null;
+        Long serviceId = appt.getService() != null ? appt.getService().getId() : null;
+        String serviceName = appt.getService() != null ? appt.getService().getName() : null;
 
         return AppointmentResponse.builder()
                 .id(appt.getId())
@@ -153,12 +153,17 @@ public class AppointmentService implements AppointmentUseCase {
                 .createdAt(appt.getCreatedAt())
                 .updatedAt(appt.getUpdatedAt())
                 .customerId(customerId)
-                .customerUsername(customerUsername)
+                .customerUsername(appt.getCustomer() != null && appt.getCustomer().getFullName() != null && !appt.getCustomer().getFullName().isBlank()
+                        ? appt.getCustomer().getFullName() : customerUsername)
                 .dentistId(dentistId)
-                .dentistUsername(dentistUsername)
+                .dentistUsername(appt.getDentist() != null && appt.getDentist().getFullName() != null && !appt.getDentist().getFullName().isBlank()
+                        ? appt.getDentist().getFullName() : dentistUsername)
                 .receptionistId(receptionistId)
-                .receptionistUsername(receptionistUsername)
-                .build();
+                .receptionistUsername(appt.getReceptionist() != null && appt.getReceptionist().getFullName() != null && !appt.getReceptionist().getFullName().isBlank()
+                        ? appt.getReceptionist().getFullName() : receptionistUsername)
+                .serviceId(serviceId)
+                .serviceName(serviceName)
+                 .build();
     }
 
     @Override
@@ -171,6 +176,7 @@ public class AppointmentService implements AppointmentUseCase {
         appt.setScheduledTime(updateReq.getScheduledTime());
         appt.setNotes(updateReq.getNotes());
         appt.setStatus(updateReq.getStatus());
+        // Do not allow customers to change service/dentist via this endpoint to avoid conflicts
         Appointment saved = repo.save(appt);
         return mapToDto(saved);
     }
@@ -196,6 +202,9 @@ public class AppointmentService implements AppointmentUseCase {
         appt.setScheduledTime(updateReq.getScheduledTime());
         appt.setNotes(updateReq.getNotes());
         appt.setStatus(updateReq.getStatus());
+        // allow admin to change service/dentist when provided
+        if (updateReq.getService() != null) appt.setService(updateReq.getService());
+        if (updateReq.getDentist() != null) appt.setDentist(updateReq.getDentist());
         Appointment saved = repo.save(appt);
         return mapToDto(saved);
     }
@@ -205,4 +214,3 @@ public class AppointmentService implements AppointmentUseCase {
         repo.deleteById(id);
     }
 }
-

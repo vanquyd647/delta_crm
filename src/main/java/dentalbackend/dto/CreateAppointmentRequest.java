@@ -12,6 +12,9 @@ public class CreateAppointmentRequest {
     private Long customerId;
     @NotNull
     private Long dentistId;
+    /** service id from system */
+    @NotNull
+    private Long serviceId;
     @NotNull @Future
     private Instant scheduledTime;
     private String notes;

@@ -23,6 +23,10 @@ public class Appointment {
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "receptionist_id")
     private UserEntity receptionist;
 
+    // Link to Service entity for booked service
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "service_id")
+    private Service service;
+
     @Enumerated(EnumType.STRING)
     private AppointmentStatus status;
 
@@ -46,4 +50,3 @@ public class Appointment {
         updatedAt = Instant.now();
     }
 }
-
