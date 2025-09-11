@@ -18,6 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import dentalbackend.domain.UserEntity;
 
+// new import for profile repo
+import dentalbackend.repository.UserProfileRepository;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -26,6 +29,7 @@ public class AppointmentService implements AppointmentUseCase {
     private final UserPort userRepo;
     private final PatientRecordUseCase patientRecordUseCase;
     private final ServicePort servicePort;
+    private final UserProfileRepository profileRepo; // injected to read emergency contact
 
     @Override
     public AppointmentResponse create(CreateAppointmentRequest req, Long receptionistId) {
@@ -138,6 +142,16 @@ public class AppointmentService implements AppointmentUseCase {
     private AppointmentResponse mapToDto(Appointment appt) {
         Long customerId = appt.getCustomer() != null ? appt.getCustomer().getId() : null;
         String customerUsername = appt.getCustomer() != null ? appt.getCustomer().getUsername() : null;
+        String customerEmail = appt.getCustomer() != null ? appt.getCustomer().getEmail() : null;
+        String customerEmergency = null;
+        try {
+            if (appt.getCustomer() != null) {
+                customerEmergency = profileRepo.findByUser(appt.getCustomer()).map(p -> p.getEmergencyContact()).orElse(null);
+            }
+        } catch (Exception ex) {
+            log.debug("Failed to load user profile for customer id={}: {}", customerId, ex.getMessage());
+        }
+
         Long dentistId = appt.getDentist() != null ? appt.getDentist().getId() : null;
         String dentistUsername = appt.getDentist() != null ? appt.getDentist().getUsername() : null;
         Long receptionistId = appt.getReceptionist() != null ? appt.getReceptionist().getId() : null;
@@ -155,6 +169,8 @@ public class AppointmentService implements AppointmentUseCase {
                 .customerId(customerId)
                 .customerUsername(appt.getCustomer() != null && appt.getCustomer().getFullName() != null && !appt.getCustomer().getFullName().isBlank()
                         ? appt.getCustomer().getFullName() : customerUsername)
+                .customerEmail(customerEmail)
+                .customerEmergencyContact(customerEmergency)
                 .dentistId(dentistId)
                 .dentistUsername(appt.getDentist() != null && appt.getDentist().getFullName() != null && !appt.getDentist().getFullName().isBlank()
                         ? appt.getDentist().getFullName() : dentistUsername)

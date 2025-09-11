@@ -22,6 +22,8 @@ public class AppointmentResponse {
 
     private Long customerId;
     private String customerUsername;
+    private String customerEmail;
+    private String customerEmergencyContact;
 
     private Long dentistId;
     private String dentistUsername;

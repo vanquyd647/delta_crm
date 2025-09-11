@@ -1,6 +1,7 @@
 package dentalbackend.controller;
 
 import dentalbackend.application.appointment.AppointmentUseCase;
+import dentalbackend.application.dentist.DentistUseCase;
 import dentalbackend.dto.CreateAppointmentRequest;
 import dentalbackend.common.ApiResponse;
 import jakarta.validation.Valid;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import dentalbackend.repository.UserRepository;
 import dentalbackend.dto.AppointmentResponse;
 import dentalbackend.domain.UserEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @RestController
 @RequestMapping("/api/appointments")
@@ -22,6 +24,8 @@ public class AppointmentController {
 
     private final AppointmentUseCase service; // depend on port (DDD)
     private final UserRepository userRepo;
+    private final DentistUseCase dentistUseCase;
+    private final JdbcTemplate jdbc; // used by admin diagnostic endpoint
 
     @PreAuthorize("hasRole('RECEPTIONIST') or hasRole('ADMIN')")
     @PostMapping
@@ -47,9 +51,40 @@ public class AppointmentController {
     @PreAuthorize("hasRole('DENTIST')")
     @GetMapping("/my")
     public ApiResponse<?> myAppointments(@AuthenticationPrincipal UserDetails principal) {
-        Long dentistId = userRepo.findByUsernameOrEmail(principal.getUsername())
+        Long userId = userRepo.findByUsernameOrEmail(principal.getUsername())
                 .orElseThrow().getId();
-        return ApiResponse.ok(service.dentistAppointments(dentistId));
+
+        // 1) Try using the user id (Appointment.dentist is usually a UserEntity -> uses user id)
+        var list = service.dentistAppointments(userId);
+        int initialCount = list == null ? 0 : list.size();
+        log.info("myAppointments: tried userId={} returnedCount={}", userId, initialCount);
+
+        // 2) If empty, try resolving Dentist entity by userId and query by the Dentist entity id (legacy cases)
+        if (list == null || list.isEmpty()) {
+            var dentist = dentistUseCase.findByUserId(userId);
+            if (dentist != null) {
+                log.info("myAppointments: found dentist record for userId={} -> dentist.id={} dentist.userId={}", userId, dentist.getId(), dentist.getUserId());
+
+                // Try dentist table id (some data may have dentist_id set to dentists.id)
+                if (dentist.getId() != null) {
+                    list = service.dentistAppointments(dentist.getId());
+                    log.info("myAppointments: tried dentist.id={} returnedCount={}", dentist.getId(), list == null ? 0 : list.size());
+                }
+                // If still empty, try the linked user id stored on Dentist (defensive)
+                if ((list == null || list.isEmpty()) && dentist.getUserId() != null) {
+                    list = service.dentistAppointments(dentist.getUserId());
+                    log.info("myAppointments: tried dentist.userId={} returnedCount={}", dentist.getUserId(), list == null ? 0 : list.size());
+                }
+            } else {
+                log.info("myAppointments: no dentist profile found for userId={}", userId);
+            }
+        }
+
+        // Final debug summary
+        int finalCount = list == null ? 0 : list.size();
+        log.info("myAppointments: finalCount={} for userId={}", finalCount, userId);
+
+        return ApiResponse.ok(list);
     }
 
     @PreAuthorize("isAuthenticated()")
@@ -107,5 +142,16 @@ public class AppointmentController {
     public ApiResponse<String> adminDelete(@PathVariable Long id) {
         service.adminDeleteAppointment(id);
         return ApiResponse.ok("Appointment deleted", null);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/mismatches")
+    public ApiResponse<java.util.List<java.util.Map<String, Object>>> findMismatchedAppointments() {
+        // Find appointments where dentist_id does not match any users.id but matches dentists.id
+        String sql = "SELECT a.id AS appt_id, a.dentist_id AS appt_dentist_id, d.id AS dentist_tbl_id, d.user_id AS dentist_user_id " +
+                "FROM appointments a JOIN dentists d ON a.dentist_id = d.id LEFT JOIN users u ON a.dentist_id = u.id " +
+                "WHERE u.id IS NULL";
+        var rows = jdbc.queryForList(sql);
+        return ApiResponse.ok(rows);
     }
 }
