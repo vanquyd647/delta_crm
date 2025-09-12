@@ -3,6 +3,7 @@ package dentalbackend.controller;
 import dentalbackend.application.appointment.AppointmentUseCase;
 import dentalbackend.application.dentist.DentistUseCase;
 import dentalbackend.dto.CreateAppointmentRequest;
+import dentalbackend.dto.UpdateAppointmentRequest;
 import dentalbackend.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -108,7 +109,7 @@ public class AppointmentController {
     @PutMapping("/{id}")
     public ApiResponse<AppointmentResponse> update(@AuthenticationPrincipal UserDetails principal,
                                          @PathVariable Long id,
-                                         @RequestBody dentalbackend.domain.Appointment updateReq) {
+                                         @RequestBody UpdateAppointmentRequest updateReq) {
         Long userId = userRepo.findByUsernameOrEmail(principal.getUsername())
                 .orElseThrow().getId();
         return ApiResponse.ok(service.updateAppointment(id, updateReq, userId));

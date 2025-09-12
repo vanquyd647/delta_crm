@@ -14,6 +14,7 @@ import dentalbackend.dto.CreateAppointmentRequest;
 import dentalbackend.dto.AppointmentResponse;
 import dentalbackend.dto.PatientRecordRequest;
 import dentalbackend.dto.DentistResponse;
+import dentalbackend.dto.UpdateAppointmentRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -53,7 +54,7 @@ public class AppointmentService implements AppointmentUseCase {
                 }
             }
         } catch (Exception ex) {
-            log.debug("Error resolving assigned dentist for appt id={}: {}", appt == null ? null : appt.getId(), ex.getMessage());
+            log.debug("Error resolving assigned dentist for appt id={}: {}", appt.getId(), ex.getMessage());
         }
         return false;
     }
@@ -62,8 +63,19 @@ public class AppointmentService implements AppointmentUseCase {
     public AppointmentResponse create(CreateAppointmentRequest req, Long receptionistId) {
         UserEntity customer = userRepo.findById(req.getCustomerId())
                 .orElseThrow(() -> new IllegalArgumentException("Customer not found with id: " + req.getCustomerId()));
-        UserEntity dentist = userRepo.findById(req.getDentistId())
-                .orElseThrow(() -> new IllegalArgumentException("Dentist not found with id: " + req.getDentistId()));
+
+        // Fix: First get the dentist record, then get the associated user
+        DentistResponse dentistRecord = dentistUseCase.getById(req.getDentistId());
+        if (dentistRecord == null) {
+            throw new IllegalArgumentException("Dentist not found with id: " + req.getDentistId());
+        }
+
+        UserEntity dentist = null;
+        if (dentistRecord.getUserId() != null) {
+            dentist = userRepo.findById(dentistRecord.getUserId())
+                    .orElseThrow(() -> new IllegalArgumentException("User not found for dentist id: " + req.getDentistId()));
+        }
+
         UserEntity receptionist = userRepo.findById(receptionistId)
                 .orElseThrow(() -> new IllegalArgumentException("Receptionist not found with id: " + receptionistId));
 
@@ -72,7 +84,7 @@ public class AppointmentService implements AppointmentUseCase {
 
         Appointment appt = Appointment.builder()
                 .customer(customer)
-                .dentist(dentist)
+                .dentist(dentist)  // This will be the UserEntity associated with the dentist
                 .receptionist(receptionist)
                 .service(service)
                 .scheduledTime(req.getScheduledTime())
@@ -184,17 +196,52 @@ public class AppointmentService implements AppointmentUseCase {
             log.debug("Failed to load user profile for customer id={}: {}", customerId, ex.getMessage());
         }
 
-        Long dentistId = appt.getDentist() != null ? appt.getDentist().getId() : appt.getDentistRefId();
+        // Fix: Properly handle dentist information - prioritize dentistRefId (raw FK)
+        Long dentistId = null;
         String dentistUsername = null;
+
         try {
-            if (appt.getDentist() != null) {
-                dentistUsername = appt.getDentist().getFullName() != null && !appt.getDentist().getFullName().isBlank()
-                        ? appt.getDentist().getFullName() : appt.getDentist().getUsername();
-            } else if (appt.getDentistRefId() != null) {
-                DentistResponse d = dentistUseCase.getById(appt.getDentistRefId());
-                if (d != null) dentistUsername = d.getName();
+            // First priority: check if dentistRefId points to dentists table
+            if (appt.getDentistRefId() != null) {
+                log.debug("Processing dentistRefId={} for appointment id={}", appt.getDentistRefId(), appt.getId());
+                DentistResponse dentistRecord = dentistUseCase.getById(appt.getDentistRefId());
+                if (dentistRecord != null) {
+                    dentistId = dentistRecord.getId(); // Return dentist table ID
+                    dentistUsername = dentistRecord.getName();
+                    log.debug("Found dentist record: id={}, name={}, userId={}",
+                             dentistRecord.getId(), dentistRecord.getName(), dentistRecord.getUserId());
+                } else {
+                    log.debug("No dentist record found for dentistRefId={}", appt.getDentistRefId());
+                }
             }
-        } catch (Exception ignored) {
+
+            // Second priority: if dentistRefId didn't work, try dentist UserEntity
+            if (dentistId == null && appt.getDentist() != null) {
+                log.debug("Processing dentist UserEntity id={} for appointment id={}", appt.getDentist().getId(), appt.getId());
+                // Find dentist record by user_id
+                DentistResponse dentistRecord = dentistUseCase.findByUserId(appt.getDentist().getId());
+                if (dentistRecord != null) {
+                    dentistId = dentistRecord.getId(); // Return dentist table ID
+                    dentistUsername = dentistRecord.getName();
+                    log.debug("Found dentist record by userId: dentistId={}, name={}",
+                             dentistRecord.getId(), dentistRecord.getName());
+                } else {
+                    // Fallback: use user info if no dentist record found
+                    log.debug("No dentist record found for userId={}, using user info as fallback", appt.getDentist().getId());
+                    dentistId = appt.getDentist().getId();
+                    dentistUsername = appt.getDentist().getFullName() != null && !appt.getDentist().getFullName().isBlank()
+                            ? appt.getDentist().getFullName() : appt.getDentist().getUsername();
+                }
+            }
+        } catch (Exception ex) {
+            log.debug("Failed to resolve dentist info for appointment id={}: {}", appt.getId(), ex.getMessage());
+            // Ultimate fallback
+            if (appt.getDentist() != null) {
+                dentistId = appt.getDentist().getId();
+                dentistUsername = appt.getDentist().getUsername();
+            } else {
+                dentistId = appt.getDentistRefId();
+            }
         }
 
         Long receptionistId = appt.getReceptionist() != null ? appt.getReceptionist().getId() : null;
@@ -225,7 +272,7 @@ public class AppointmentService implements AppointmentUseCase {
 
     @Override
     @Transactional
-    public AppointmentResponse updateAppointment(Long id, Appointment updateReq, Long userId) {
+    public AppointmentResponse updateAppointment(Long id, UpdateAppointmentRequest updateReq, Long userId) {
         UserEntity actor = userRepo.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         Appointment appt = repo.findByIdFetch(id).orElseThrow(() -> new IllegalArgumentException("Appointment not found with id: " + id));
 
@@ -236,12 +283,39 @@ public class AppointmentService implements AppointmentUseCase {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the customer or admin can update this appointment");
         }
 
-        if (updateReq.getScheduledTime() != null) appt.setScheduledTime(updateReq.getScheduledTime());
-        if (updateReq.getNotes() != null) appt.setNotes(updateReq.getNotes());
+        // Update basic fields that both owner and admin can change
+        if (updateReq.getScheduledTime() != null) {
+            appt.setScheduledTime(updateReq.getScheduledTime());
+        }
+        if (updateReq.getNotes() != null) {
+            appt.setNotes(updateReq.getNotes());
+        }
 
+        // Admin-only updates: dentist and service
         if (isAdmin) {
-            if (updateReq.getService() != null) appt.setService(updateReq.getService());
-            if (updateReq.getDentist() != null) appt.setDentist(updateReq.getDentist());
+            // Update dentist if provided
+            if (updateReq.getDentistId() != null) {
+                DentistResponse dentistRecord = dentistUseCase.getById(updateReq.getDentistId());
+                if (dentistRecord == null) {
+                    throw new IllegalArgumentException("Dentist not found with id: " + updateReq.getDentistId());
+                }
+
+                UserEntity newDentist = null;
+                if (dentistRecord.getUserId() != null) {
+                    newDentist = userRepo.findById(dentistRecord.getUserId())
+                            .orElseThrow(() -> new IllegalArgumentException("User not found for dentist id: " + updateReq.getDentistId()));
+                }
+                appt.setDentist(newDentist);
+                log.info("Updated appointment id={} dentist to dentistId={} (userId={})", id, updateReq.getDentistId(), dentistRecord.getUserId());
+            }
+
+            // Update service if provided
+            if (updateReq.getServiceId() != null) {
+                dentalbackend.domain.Service service = servicePort.findById(updateReq.getServiceId())
+                        .orElseThrow(() -> new IllegalArgumentException("Service not found with id: " + updateReq.getServiceId()));
+                appt.setService(service);
+                log.info("Updated appointment id={} service to serviceId={}", id, updateReq.getServiceId());
+            }
         }
 
         Appointment saved = repo.save(appt);
@@ -292,4 +366,3 @@ public class AppointmentService implements AppointmentUseCase {
         repo.deleteById(id);
     }
 }
-
