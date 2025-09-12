@@ -101,7 +101,7 @@ public class AppointmentController {
                                             @PathVariable Long id) {
         UserEntity requester = userRepo.findByUsernameOrEmail(principal.getUsername())
                 .orElseThrow();
-        return ApiResponse.ok(service.getAppointmentForUser(id, requester));
+        return ApiResponse.ok(service.getAppointmentForUser(id, requester.getId()));
     }
 
     @PreAuthorize("isAuthenticated()")

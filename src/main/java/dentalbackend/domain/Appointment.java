@@ -20,6 +20,10 @@ public class Appointment {
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "dentist_id")
     private UserEntity dentist;
 
+    // raw FK value (read-only) for compatibility with legacy data where dentist_id references dentists.id
+    @Column(name = "dentist_id", insertable = false, updatable = false)
+    private Long dentistRefId;
+
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "receptionist_id")
     private UserEntity receptionist;
 

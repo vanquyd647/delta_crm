@@ -20,7 +20,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findByCustomerId(Long customerId);
 
     // FETCH variants to eagerly load relations so DTO mapping works outside of session
-    @Query("SELECT a FROM Appointment a LEFT JOIN FETCH a.customer LEFT JOIN FETCH a.dentist LEFT JOIN FETCH a.receptionist LEFT JOIN FETCH a.service WHERE a.dentist.id = :dentistId")
+    @Query("SELECT a FROM Appointment a LEFT JOIN FETCH a.customer LEFT JOIN FETCH a.dentist LEFT JOIN FETCH a.receptionist LEFT JOIN FETCH a.service WHERE a.dentist.id = :dentistId OR a.dentistRefId = :dentistId")
     List<Appointment> findByDentistIdFetch(@Param("dentistId") Long dentistId);
 
     @Query("SELECT a FROM Appointment a LEFT JOIN FETCH a.customer LEFT JOIN FETCH a.dentist LEFT JOIN FETCH a.receptionist LEFT JOIN FETCH a.service WHERE a.customer.id = :customerId")

@@ -11,7 +11,7 @@ public interface AppointmentUseCase {
     AppointmentResponse create(CreateAppointmentRequest req, Long receptionistId);
     List<AppointmentResponse> dentistAppointments(Long dentistId);
     List<AppointmentResponse> customerAppointments(Long customerId);
-    AppointmentResponse getAppointmentForUser(Long id, dentalbackend.domain.UserEntity requester);
+    AppointmentResponse getAppointmentForUser(Long id, Long requesterId);
     AppointmentResponse updateAppointment(Long id, Appointment updateReq, Long userId);
     void cancelAppointment(Long id, Long userId);
     List<AppointmentResponse> allAppointments();

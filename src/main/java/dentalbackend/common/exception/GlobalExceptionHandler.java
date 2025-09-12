@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.stream.Collectors;
 
@@ -27,6 +28,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiResponse<?>> handleConstraint(ConstraintViolationException ex) {
         return ResponseEntity.badRequest().body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    @ResponseBody
+    public ResponseEntity<ApiResponse<?>> handleResponseStatus(ResponseStatusException ex) {
+        // Spring's ResponseStatusException provides getStatusCode() which returns an HttpStatusCode (Spring 6+)
+        var statusCode = ex.getStatusCode();
+        String msg = ex.getReason() != null ? ex.getReason() : statusCode.toString();
+        return ResponseEntity.status(statusCode.value()).body(ApiResponse.error(msg));
     }
 
     @ExceptionHandler(RuntimeException.class)
