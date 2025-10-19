@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,9 +55,32 @@ public class PublicBookingService implements PublicBookingUseCase {
 
     @Override
     public AppointmentResponse quickBook(QuickBookingRequest req) {
-        // Parse date and time
-        LocalDate date = LocalDate.parse(req.getDate(), DateTimeFormatter.ofPattern("MM/dd/yyyy", Locale.ENGLISH));
-        LocalTime time = LocalTime.parse(req.getTime(), DateTimeFormatter.ofPattern("HH:mm", Locale.ENGLISH));
+        // Parse date (support multiple common formats) and time
+        LocalDate date = null;
+        String dateStr = req.getDate() == null ? "" : req.getDate().trim();
+        DateTimeFormatter[] dateFormatters = new DateTimeFormatter[] {
+                DateTimeFormatter.ofPattern("MM/dd/yyyy", Locale.ENGLISH),
+                DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.ENGLISH),
+                DateTimeFormatter.ISO_LOCAL_DATE
+        };
+        for (DateTimeFormatter fmt : dateFormatters) {
+            try {
+                date = LocalDate.parse(dateStr, fmt);
+                break;
+            } catch (DateTimeParseException ignored) {
+            }
+        }
+        if (date == null) {
+            throw new IllegalArgumentException("Unable to parse date '" + req.getDate() + "'. Expected formats: MM/dd/yyyy or dd/MM/yyyy or yyyy-MM-dd");
+        }
+
+        LocalTime time;
+        try {
+            time = LocalTime.parse(req.getTime(), DateTimeFormatter.ofPattern("HH:mm", Locale.ENGLISH));
+        } catch (DateTimeParseException ex) {
+            throw new IllegalArgumentException("Unable to parse time '" + req.getTime() + "'. Expected format: HH:mm (24-hour), e.g. 14:30");
+        }
+
         ZoneId zone = ZoneId.systemDefault();
         Instant scheduledInstant = ZonedDateTime.of(date, time, zone).toInstant();
 

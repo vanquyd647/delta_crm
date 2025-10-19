@@ -64,35 +64,60 @@ public class ChatServiceImpl implements ChatUseCase {
         return b.build();
     }
 
+    // Helper: assemble the final system prompt using provided value or defaults and optionally include services.
+    // This extracts the existing logic into a reusable method so we can both send it to an LLM or use it for local simulation.
+    private String assembleSystem(String systemPrompt) {
+        String sys = (systemPrompt != null && !systemPrompt.isBlank()) ? systemPrompt : defaultSystem;
+
+        if (includeServices) {
+            try {
+                List<ServiceResponse> services = serviceUseCase.listAll();
+                if (services != null && !services.isEmpty()) {
+                    if (includeServicesFull) {
+                        String json = om.writeValueAsString(Map.of("table", "services", "rows", services));
+                        if (sys == null || sys.isBlank()) sys = "";
+                        sys = sys + "\nServices JSON: " + json;
+                    } else {
+                        String summary = services.stream()
+                                .map(s -> s.getName() + " (" + s.getDurationMinutes() + "m)"
+                                        + (s.getPrice() != null ? " - " + s.getPrice() : ""))
+                                .limit(12)
+                                .collect(Collectors.joining(", "));
+                        if (sys == null || sys.isBlank()) sys = "";
+                        sys = sys + "\nAvailable services: " + summary;
+                    }
+                }
+            } catch (Exception e) {
+                // preserve original behavior: ignore service-loading errors and proceed
+            }
+        }
+        return sys;
+    }
+
     @Override
     public String generate(String userMessage, String systemPrompt) {
         try {
-            // if client didn't provide systemPrompt, use default from config
-            String sys = (systemPrompt != null && !systemPrompt.isBlank()) ? systemPrompt : defaultSystem;
+            // assemble system using helper
+            String sys = assembleSystem(systemPrompt);
 
-            // optionally include a short summary of available services or full JSON
-            if (includeServices) {
-                try {
-                    List<ServiceResponse> services = serviceUseCase.listAll();
-                    if (services != null && !services.isEmpty()) {
-                        if (includeServicesFull) {
-                            // append full JSON representation
-                            String json = om.writeValueAsString(Map.of("table", "services", "rows", services));
-                            if (sys == null || sys.isBlank()) sys = "";
-                            sys = sys + "\nServices JSON: " + json;
-                        } else {
-                            String summary = services.stream()
-                                    .map(s -> s.getName() + " (" + s.getDurationMinutes() + "m)"
-                                            + (s.getPrice() != null ? " - " + s.getPrice() : ""))
-                                    .limit(12)
-                                    .collect(Collectors.joining(", "));
-                            if (sys == null || sys.isBlank()) sys = "";
-                            sys = sys + "\nAvailable services: " + summary;
-                        }
-                    }
-                } catch (Exception e) {
-                    // ignore service-loading errors and proceed
+            // If no OpenAI API key configured, return a simulated/local reply so developers can try the feature without outbound calls.
+            if (openAiKey == null || openAiKey.isBlank()) {
+                StringBuilder sb = new StringBuilder();
+                if (sys != null && !sys.isBlank()) {
+                    sb.append("[Simulated assistant]\nSystem context:\n").append(sys).append("\n\n");
+                } else {
+                    sb.append("[Simulated assistant]\n");
                 }
+                sb.append("User: ").append(userMessage).append("\n");
+                sb.append("Assistant: ");
+                // A small, deterministic simulated reply that tries to be helpful
+                sb.append("Tôi đã nhận được câu hỏi của bạn: '").append(userMessage).append("'. ");
+                if (sys != null && !sys.isBlank()) {
+                    sb.append("Ngữ cảnh hệ thống được sử dụng để trả lời: '").append(sys).append("'.");
+                } else {
+                    sb.append("Không có ngữ cảnh hệ thống đặc biệt.");
+                }
+                return sb.toString().trim();
             }
 
             List<Map<String, String>> messages = new ArrayList<>();

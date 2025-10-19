@@ -50,7 +50,7 @@ public class OAuth2SuccessHandler extends org.springframework.security.web.authe
     private boolean setCookies;
 
     // ✅ FE URL config
-    @Value("${app.frontend.url:http://localhost:3000}")
+    @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
     @Value("${app.frontend.oauth-success-path:/auth/oauth-success}")
