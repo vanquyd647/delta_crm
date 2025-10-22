@@ -102,6 +102,11 @@ app:
     include-services: true
     include-services-full: true
 
+  # Python ML service integration (optional - if not set, ML recommendations will be skipped)
+  ml:
+    service:
+      url: ${ML_SERVICE_URL:http://localhost:5000}
+
   recaptcha:
     secret: ${RECAPTCHA_SECRET}
     min-score: ${RECAPTCHA_MIN_SCORE:0.5}
