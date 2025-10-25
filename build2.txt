@@ -1,0 +1,290 @@
+[INFO] Error stacktraces are turned on.
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------------< Ai_search:Ai_search >-------------------------
+[INFO] Building Ai_search 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ Ai_search ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 12 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ Ai_search ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 114 source files with javac [debug parameters release 17] to target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[141,6] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[139,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[74,9] 'try' without 'catch', 'finally' or resource declarations
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[142,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[142,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[143,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[144,16] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[145,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[145,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[146,14] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[146,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[147,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[147,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[148,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[149,16] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[150,19] '.class' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[150,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[150,27] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[150,28] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[150,38] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[151,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[151,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[152,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[152,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[153,6] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[153,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[154,1] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[157,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[157,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[159,19] '.class' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[158,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[161,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[161,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[162,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[162,20] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[163,14] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[163,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[164,14] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[164,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[165,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[167,14] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[167,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[168,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[168,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[169,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[169,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[170,6] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[170,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[171,1] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[173,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[173,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[187,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[187,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[191,13] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[193,15] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[193,39] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[196,13] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[198,15] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[198,39] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[202,13] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[202,29] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[202,62] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[202,64] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[234,13] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[234,42] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[234,44] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[247,13] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[247,33] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[247,37] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[254,13] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[254,35] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[254,55] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[277,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[277,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[278,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[278,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[279,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[279,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[280,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[280,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[281,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[281,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[282,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[282,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[284,13] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[284,34] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[284,41] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[285,11] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[287,9] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[292,12] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[292,52] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[295,13] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[296,9] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[299,9] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[304,12] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[304,71] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[307,9] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[308,9] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[309,9] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[311,9] class, interface, enum, or record expected
+[INFO] 100 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.163 s
+[INFO] Finished at: 2025-10-25T15:45:10+07:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.0:compile (default-compile) on project Ai_search: Compilation failure: Compilation failure: 
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[141,6] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[139,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[74,9] 'try' without 'catch', 'finally' or resource declarations
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[142,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[142,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[143,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[144,16] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[145,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[145,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[146,14] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[146,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[147,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[147,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[148,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[149,16] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[150,19] '.class' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[150,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[150,27] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[150,28] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[150,38] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[151,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[151,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[152,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[152,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[153,6] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[153,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[154,1] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[157,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[157,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[159,19] '.class' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[158,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[161,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[161,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[162,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[162,20] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[163,14] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[163,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[164,14] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[164,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[165,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[167,14] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[167,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[168,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[168,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[169,10] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[169,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[170,6] illegal start of expression
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[170,1] not a statement
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[171,1] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[173,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[173,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[187,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[187,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[191,13] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[193,15] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[193,39] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[196,13] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[198,15] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[198,39] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[202,13] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[202,29] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[202,62] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[202,64] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[234,13] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[234,42] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[234,44] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[247,13] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[247,33] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[247,37] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[254,13] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[254,35] ';' expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[254,55] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[277,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[277,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[278,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[278,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[279,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[279,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[280,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[280,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[281,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[281,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[282,23] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[282,24] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[284,13] illegal start of type
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[284,34] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[284,41] <identifier> expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[285,11] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[287,9] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[292,12] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[292,52] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[295,13] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[296,9] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[299,9] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[304,12] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[304,71] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[307,9] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[308,9] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[309,9] class, interface, enum, or record expected
+[ERROR] /D:/Project/dental-backend/dental-backend/src/main/java/dentalbackend/controller/ChatController.java:[311,9] class, interface, enum, or record expected
+[ERROR] -> [Help 1]
+org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.0:compile (default-compile) on project Ai_search: Compilation failure
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute2 (MojoExecutor.java:333)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute (MojoExecutor.java:316)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:212)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:174)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.access$000 (MojoExecutor.java:75)
+    at org.apache.maven.lifecycle.internal.MojoExecutor$1.run (MojoExecutor.java:162)
+    at org.apache.maven.plugin.DefaultMojosExecutionStrategy.execute (DefaultMojosExecutionStrategy.java:39)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:159)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:105)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:73)
+    at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build (SingleThreadedBuilder.java:53)
+    at org.apache.maven.lifecycle.internal.LifecycleStarter.execute (LifecycleStarter.java:118)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:261)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:173)
+    at org.apache.maven.DefaultMaven.execute (DefaultMaven.java:101)
+    at org.apache.maven.cli.MavenCli.execute (MavenCli.java:906)
+    at org.apache.maven.cli.MavenCli.doMain (MavenCli.java:283)
+    at org.apache.maven.cli.MavenCli.main (MavenCli.java:206)
+    at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0 (Native Method)
+    at jdk.internal.reflect.NativeMethodAccessorImpl.invoke (NativeMethodAccessorImpl.java:77)
+    at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke (DelegatingMethodAccessorImpl.java:43)
+    at java.lang.reflect.Method.invoke (Method.java:568)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced (Launcher.java:255)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launch (Launcher.java:201)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode (Launcher.java:361)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.main (Launcher.java:314)
+Caused by: org.apache.maven.plugin.compiler.CompilationFailureException: Compilation failure
+    at org.apache.maven.plugin.compiler.AbstractCompilerMojo.execute (AbstractCompilerMojo.java:1309)
+    at org.apache.maven.plugin.compiler.CompilerMojo.execute (CompilerMojo.java:225)
+    at org.apache.maven.plugin.DefaultBuildPluginManager.executeMojo (DefaultBuildPluginManager.java:126)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute2 (MojoExecutor.java:328)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute (MojoExecutor.java:316)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:212)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:174)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.access$000 (MojoExecutor.java:75)
+    at org.apache.maven.lifecycle.internal.MojoExecutor$1.run (MojoExecutor.java:162)
+    at org.apache.maven.plugin.DefaultMojosExecutionStrategy.execute (DefaultMojosExecutionStrategy.java:39)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:159)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:105)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:73)
+    at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build (SingleThreadedBuilder.java:53)
+    at org.apache.maven.lifecycle.internal.LifecycleStarter.execute (LifecycleStarter.java:118)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:261)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:173)
+    at org.apache.maven.DefaultMaven.execute (DefaultMaven.java:101)
+    at org.apache.maven.cli.MavenCli.execute (MavenCli.java:906)
+    at org.apache.maven.cli.MavenCli.doMain (MavenCli.java:283)
+    at org.apache.maven.cli.MavenCli.main (MavenCli.java:206)
+    at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0 (Native Method)
+    at jdk.internal.reflect.NativeMethodAccessorImpl.invoke (NativeMethodAccessorImpl.java:77)
+    at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke (DelegatingMethodAccessorImpl.java:43)
+    at java.lang.reflect.Method.invoke (Method.java:568)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced (Launcher.java:255)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launch (Launcher.java:201)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode (Launcher.java:361)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.main (Launcher.java:314)
+[ERROR] 
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

@@ -154,10 +154,10 @@ def analyze_services():
             'message': f'Analysis failed: {str(e)}'
         }), 500
 
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print(f"🚀 Starting Dental AI ML Service on port {port}")
     print(f"📡 Backend URL: {BACKEND_URL}")
     print(f"📊 Initializing with live database data...")
     app.run(host='0.0.0.0', port=port, debug=True)
-

@@ -17,7 +17,7 @@ Các bước nhanh để chạy toàn bộ hệ thống (dev)
 
 Tích hợp vào UI / Chatbot
 - Khi người dùng nhập truy vấn trên UI, luồng gợi ý:
-  1. UI gửi message đến endpoint chat assist: POST /api/chat/assist (Java app)
+   1. UI gửi message đến endpoint chat assist: POST /api/assist (Java app)
   2. Backend Java có thể gọi ML service để tăng cường đề xuất: POST http://localhost:5000/recommend với body {"query": "<user message>", "top_k": 3}
   3. Kết quả trả về sẽ được hiển thị trong UI (gợi ý dịch vụ, thời gian, nha sĩ)
 
@@ -28,9 +28,9 @@ Map<String,Object> body = Map.of("query", userMessage, "top_k", 3);
 ResponseEntity<String> resp = restTemplate.postForEntity(url, body, String.class);
 ```
 
-Postman - mẫu raw JSON cho /api/chat/book (từ UI -> Java -> public booking)
+Postman - mẫu raw JSON cho /api/book (từ UI -> Java -> public booking)
 ```
-POST http://localhost:8080/api/chat/book
+POST http://localhost:8080/api/book
 Content-Type: application/json
 
 {
@@ -62,4 +62,3 @@ pandas==2.2.2
 scikit-learn==1.3.2
 joblib==1.3.2
 gunicorn==20.1.0
-

@@ -42,7 +42,7 @@
 ```
 1. User: "Tôi muốn tẩy trắng răng, giá bao nhiêu?"
    ↓
-2. POST /api/chat/assist {"message": "Tôi muốn tẩy trắng răng..."}
+2. POST /api/assist {"message": "Tôi muốn tẩy trắng răng..."}
    ↓
 3. Java Backend:
    - Lấy danh sách services từ database
@@ -76,7 +76,7 @@
 ```
 1. User chọn service, dentist, date, time
    ↓
-2. POST /api/chat/book {
+2. POST /api/book {
      "fullName": "...",
      "email": "...",
      "serviceId": 3,
@@ -152,7 +152,7 @@ GET http://localhost:8080/api/services
 
 ### 3️⃣ Chat Assistant (gợi ý dịch vụ)
 ```http
-POST http://localhost:8080/api/chat/assist
+POST http://localhost:8080/api/assist
 Content-Type: application/json
 
 {
@@ -192,7 +192,7 @@ Content-Type: application/json
 
 ### 4️⃣ Đặt lịch nhanh
 ```http
-POST http://localhost:8080/api/chat/book
+POST http://localhost:8080/api/book
 Content-Type: application/json
 
 {
@@ -392,4 +392,3 @@ services:
 ---
 
 **🎉 Hoàn thành! Hệ thống đã sẵn sàng sử dụng với AI phân tích dữ liệu realtime từ database.**
-

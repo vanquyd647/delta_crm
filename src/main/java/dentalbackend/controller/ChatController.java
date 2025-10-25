@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 
 
 @RestController
-@RequestMapping("/api/chat")
 @RequiredArgsConstructor
 public class ChatController {
 
@@ -47,7 +46,8 @@ public class ChatController {
     @Value("${ml.service.url:}")
     private String mlServiceUrl;
 
-    @PostMapping(value = "/generate", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    // Support both new path and legacy /api/chat/generate for backwards compatibility
+    @PostMapping(value = {"/api/generate", "/api/chat/generate"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ChatResponse generate(@Valid @RequestBody ChatRequest req) {
         String reply = chatService.generate(req.getMessage(), req.getSystem());
         return new ChatResponse(reply);
@@ -65,7 +65,8 @@ public class ChatController {
      * - "chào" → Chitchat response
      * - "tôi muốn khám răng" → Booking suggestions with services/dentists/dates
      */
-    @PostMapping(value = "/assist", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    // Support both new path and legacy /api/chat/assist
+    @PostMapping(value = {"/api/assist", "/api/chat/assist"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiResponse<Map<String, Object>> assist(@Valid @RequestBody ChatRequest req) {
         Map<String, Object> result = new HashMap<>();
         String userMessage = req.getMessage() == null ? "" : req.getMessage();
@@ -108,11 +109,31 @@ public class ChatController {
                     "Assistant:",
                     userMessage
                 );
-                String aiReply = chatService.generate(chitchatPrompt, null);
+                // Prefer a clear Vietnamese response that identifies the clinic.
+                // We still request a friendly reply from the AI, but enforce a clear identity message.
+                String aiReply = null;
+                try {
+                    aiReply = chatService.generate(chitchatPrompt, null);
+                } catch (Exception ignored) {
+                    // If AI call fails, fall back to a canned Vietnamese reply
+                }
+
+                String enforcedReply = "Xin chào! Bạn đang trò chuyện với Nha khoa Hoàng Bình. Tôi có thể giúp gì cho bạn hôm nay?";
+
+                // If AI produced a reply in Vietnamese we can append it, otherwise use the enforced reply.
+                String finalReply = enforcedReply;
+                if (aiReply != null) {
+                    // If aiReply already contains Vietnamese characters or looks substantive, include it after enforced message.
+                    // Extract only Vietnamese-like sentences from the AI reply and append them.
+                    String vietnameseOnly = extractVietnameseSentences(aiReply);
+                    if (vietnameseOnly != null && !vietnameseOnly.isBlank()) {
+                        finalReply = enforcedReply + " " + vietnameseOnly.trim();
+                    }
+                }
 
                 result.put("type", "chitchat");
-                result.put("reply", aiReply);
-                result.put("messageSummary", aiReply);
+                result.put("reply", finalReply);
+                result.put("messageSummary", finalReply);
 
                 return ApiResponse.ok(result);
             }
@@ -235,8 +256,8 @@ public class ChatController {
         }
     }
 
-    // New endpoint: perform quick booking (for chat flow) - forwards to public booking use case
-    @PostMapping(value = "/book", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    // Support both new path and legacy /api/chat/book
+    @PostMapping(value = {"/api/book", "/api/chat/book"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiResponse<?> book(@Valid @RequestBody QuickBookingRequest req) {
         try {
             var appt = publicBookingUseCase.quickBook(req);
@@ -247,8 +268,8 @@ public class ChatController {
         }
     }
 
-    // Debug endpoint to inspect assembled system prompt and services used
-    @PostMapping(value = "/debug", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    // Support both new path and legacy /api/chat/debug
+    @PostMapping(value = {"/api/debug", "/api/chat/debug"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiResponse<Map<String, Object>> debug(@Valid @RequestBody ChatRequest req) {
         String sys = (req.getSystem() != null && !req.getSystem().isBlank()) ? req.getSystem() : defaultSystem;
 
@@ -279,4 +300,38 @@ public class ChatController {
         result.put("userMessage", req.getMessage());
         return ApiResponse.ok(result);
     }
+
+    // Moved helper methods to class scope (previously they were inside assist and caused a syntax error)
+    // Helper: detect Vietnamese by presence of common Vietnamese diacritics or 'đ' letter
+    private boolean containsVietnameseChars(String s) {
+        if (s == null) return false;
+        // common Vietnamese diacritics and letter đ/Đ
+        String vietnameseChars = "àáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠÂẦẤẨẪẬĂẰẮẲẴẶÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ";
+        for (int i = 0; i < s.length(); i++) {
+            if (vietnameseChars.indexOf(s.charAt(i)) >= 0) return true;
+        }
+        // fallback: check common Vietnamese words
+        String lower = s.toLowerCase();
+        String[] hints = {"xin chào", "chào", "bạn", "dịch vụ", "đặt", "nha khoa", "bác sĩ", "cảm ơn", "giờ", "địa chỉ"};
+        for (String h : hints) if (lower.contains(h)) return true;
+        return false;
+    }
+
+    // Helper: extract Vietnamese-like sentences from AI text
+    private String extractVietnameseSentences(String text) {
+        if (text == null) return "";
+        // split by ., !, ? and newlines
+        String[] parts = text.split("(?<=[\\.!?])\\s+|\\n+");
+        List<String> keep = new ArrayList<>();
+        for (String p : parts) {
+            String t = p.trim();
+            if (t.isEmpty()) continue;
+            if (containsVietnameseChars(t)) {
+                // strip trailing English fragments inside parentheses or after slash
+               keep.add(t.replaceAll("\\s*\\(.*?\\)", "").trim());
+            }
+        }
+        return String.join(" ", keep);
+   }
+
 }

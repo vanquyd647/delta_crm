@@ -529,7 +529,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponse_JwtResponse'
 
-  /api/chat/generate:
+  /api/generate:
     post:
       summary: Generate chat reply
       security: []

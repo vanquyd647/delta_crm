@@ -15,7 +15,7 @@
 ### Ví dụ 1: User gửi "chào"
 
 ```
-1️⃣ POST /api/chat/assist {"message": "chào"}
+1️⃣ POST /api/assist {"message": "chào"}
    ↓
 2️⃣ Java gọi OpenAI để phân tích ý định:
    Prompt: "Analyze this message: 'chào'. Intent?"
@@ -45,7 +45,7 @@
 ### Ví dụ 2: User gửi "tôi muốn tẩy trắng răng"
 
 ```
-1️⃣ POST /api/chat/assist {"message": "tôi muốn tẩy trắng răng"}
+1️⃣ POST /api/assist {"message": "tôi muốn tẩy trắng răng"}
    ↓
 2️⃣ Java gọi OpenAI phân tích ý định:
    OpenAI trả về: "BOOKING"
@@ -242,7 +242,7 @@ POST http://localhost:5000/recommend
 
 ### Test 1: Chitchat (không trả services)
 ```http
-POST http://localhost:8080/api/chat/assist
+POST http://localhost:8080/api/assist
 {
   "message": "chào"
 }
@@ -266,7 +266,7 @@ POST http://localhost:8080/api/chat/assist
 
 ### Test 2: Hỏi về dịch vụ
 ```http
-POST http://localhost:8080/api/chat/assist
+POST http://localhost:8080/api/assist
 {
   "message": "tôi muốn khám răng"
 }
@@ -298,7 +298,7 @@ POST http://localhost:8080/api/chat/assist
 
 ### Test 3: Câu hỏi phức tạp
 ```http
-POST http://localhost:8080/api/chat/assist
+POST http://localhost:8080/api/assist
 {
   "message": "con tôi 5 tuổi bị sâu răng, chi phí bao nhiêu?"
 }
@@ -340,7 +340,7 @@ set OPENAI_API_KEY=sk-proj-xxxxx
 
 3. Test OpenAI hoạt động:
 ```http
-POST http://localhost:8080/api/chat/generate
+POST http://localhost:8080/api/generate
 {
   "message": "hello"
 }
@@ -449,4 +449,3 @@ spring:
 3. **Java (Manager)** - Quản lý: Điều phối, quyết định, kết hợp kết quả
 
 → **Kết quả:** Chatbot thông minh, trả lời đúng ngữ cảnh, gợi ý chính xác!
-
