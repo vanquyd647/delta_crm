@@ -7,10 +7,12 @@ import dentalbackend.dto.AppointmentResponse;
 import dentalbackend.domain.Appointment;
 import dentalbackend.domain.AppointmentStatus;
 import dentalbackend.domain.UserEntity;
+import dentalbackend.domain.Role;
 import dentalbackend.domain.port.AppointmentPort;
 import dentalbackend.domain.port.UserPort;
 import dentalbackend.domain.port.ServicePort;
 import dentalbackend.infrastructure.email.EmailService;
+import dentalbackend.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +33,7 @@ public class PublicBookingService implements PublicBookingUseCase {
     private final AppointmentPort appointmentPort;
     private final ServicePort servicePort;
     private final EmailService emailService;
+    private final RoleRepository roleRepository;
 
     @Value("${clinic.contact.email:homequy001@gmail.com}")
     private String clinicEmail;
@@ -99,6 +102,13 @@ public class PublicBookingService implements PublicBookingUseCase {
                     .enabled(true)
                     .build();
             try {
+                // Resolve Role entity and attach if available
+                try {
+                    Role roleEntity = roleRepository.findByName(dentalbackend.domain.UserRole.CUSTOMER).orElse(null);
+                    u.setRoleEntity(roleEntity);
+                } catch (Exception ex) {
+                    // ignore
+                }
                 return userPort.save(u);
             } catch (Exception ex) {
                 log.warn("Failed to create customer user for quick booking: {}", ex.getMessage());

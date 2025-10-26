@@ -5,10 +5,12 @@ import dentalbackend.domain.UserEntity;
 import dentalbackend.domain.UserPreferences;
 import dentalbackend.domain.UserProfile;
 import dentalbackend.domain.UserRole;
+import dentalbackend.domain.Role;
 import dentalbackend.dto.UpdatePreferencesRequest;
 import dentalbackend.repository.UserPreferencesRepository;
 import dentalbackend.repository.UserProfileRepository;
 import dentalbackend.repository.UserRepository;
+import dentalbackend.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ public class UserServiceImpl implements UserUseCase {
     private final PasswordEncoder passwordEncoder;
     private final UserProfileRepository profileRepo;
     private final UserPreferencesRepository preferencesRepo;
+    private final RoleRepository roleRepository;
 
     @Override
     public UserEntity createUser(String username, String email, String rawPassword, UserRole role) {
@@ -33,7 +36,7 @@ public class UserServiceImpl implements UserUseCase {
                 .username(username)
                 .email(email)
                 .passwordHash(hash)
-                .role(role)
+                .role(role) // transient; will resolve Role entity below
                 .provider(dentalbackend.domain.AuthProvider.LOCAL)
                 .providerId(null)
                 .fullName(null)
@@ -45,6 +48,14 @@ public class UserServiceImpl implements UserUseCase {
                 .debt(0.0)
                 .serviceStatus(null)
                 .build();
+
+        // Resolve Role entity and attach
+        try {
+            Role roleEntity = roleRepository.findByName(role).orElse(null);
+            u.setRoleEntity(roleEntity);
+        } catch (Exception ex) {
+            // best-effort: leave null, permission checks still rely on transient enum until persisted
+        }
 
         // Save user first to obtain id
         UserEntity saved = userRepo.save(u);
@@ -95,6 +106,15 @@ public class UserServiceImpl implements UserUseCase {
 
     @Override
     public UserEntity save(UserEntity user) {
+        // New: Resolve transient role enum to Role entity to avoid duplicate role rows and ensure roleEntity is set
+        try {
+            if (user.getRole() != null && user.getRoleEntity() == null) {
+                roleRepository.findByName(user.getRole()).ifPresent(user::setRoleEntity);
+            }
+        } catch (Exception ex) {
+            // best-effort: ignore resolution failure
+        }
+
         UserEntity saved = userRepo.save(user);
 
         // Sync or create profile

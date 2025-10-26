@@ -35,9 +35,14 @@ public class UserEntity {
     @Column(name = "password_hash", nullable = false, length = 120)
     private String passwordHash;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
+    /** Keep a transient enum-compatible field for builder and existing callers. This will be synchronized with roleEntity. */
+    @Transient
     private UserRole role;
+
+    /** Replace previous enum role field with a proper Role entity relation. */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id")
+    private Role roleEntity;
 
     /** Thông tin liên kết OAuth2/OIDC */
     @Enumerated(EnumType.STRING)
@@ -81,22 +86,53 @@ public class UserEntity {
     @Column(length = 512)
     private String avatarUrl; // store user's avatar/profile image URL (e.g. from Google)
 
-    @PrePersist
-    protected void onCreate() {
-        Instant now = Instant.now();
-        createdAt = now;
-        updatedAt = now;
+    /** Synchronize transient role and roleEntity after loading from DB */
+    @PostLoad
+    private void postLoadSyncRole() {
+        if (this.roleEntity != null) {
+            this.role = this.roleEntity.getName();
+        }
     }
 
+    /**
+     * Single lifecycle callback for both persist and update.
+     * - Ensure timestamps (createdAt/updatedAt) are set.
+     * - Do NOT create transient Role entity here; service layer must resolve roleEntity to avoid duplicate inserts.
+     */
+    @PrePersist
     @PreUpdate
-    protected void onUpdate() {
-        updatedAt = Instant.now();
+    private void beforeSave() {
+        Instant now = Instant.now();
+        if (this.createdAt == null) this.createdAt = now;
+        this.updatedAt = now;
+
+        // Do not auto-create roleEntity from `role` here; that causes cascade insert and duplicates.
+        if (this.roleEntity != null && this.role == null) {
+            this.role = this.roleEntity.getName();
+        }
     }
+
+    /** Compatibility: keep previous getRole()/setRole(UserRole) methods so existing code that reads/writes enum continues to work */
+    public UserRole getRole() {
+        if (this.role != null) return this.role;
+        return roleEntity != null ? roleEntity.getName() : null;
+    }
+
+    public void setRole(UserRole role) {
+        // Only set transient enum; do not create roleEntity here.
+        this.role = role;
+    }
+
+    // Allow direct access to the Role entity when needed
+    public Role getRoleEntity() { return this.roleEntity; }
+    public void setRoleEntity(Role roleEntity) { this.roleEntity = roleEntity; }
 
     /** Map sang Spring Security UserDetails (dao auth) */
     public UserDetails toUserDetails() {
+        UserRole r = getRole();
+        String roleName = r != null ? r.name() : "UNKNOWN";
         Collection<? extends GrantedAuthority> authorities =
-                List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+                List.of(new SimpleGrantedAuthority("ROLE_" + roleName));
         return new org.springframework.security.core.userdetails.User(
                 this.username,
                 this.passwordHash,

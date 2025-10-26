@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Lookups</title>
+<style>body{font-family:Arial;margin:24px}label{display:block;margin-top:8px}input,button,textarea{width:100%;padding:8px;margin-top:4px;box-sizing:border-box}</style>
+</head>
+<body>
+<!-- inserted navbar for UI flow -->
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px">
+  <a href="/index" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Home</a>
+  <a href="/appointments" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Appointments</a>
+  <a href="/appointment-assign" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Assign appointment</a>
+  <a href="/booking" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Booking</a>
+  <a href="/consultation" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Consultation</a>
+  <a href="/admin" style="padding:8px 12px;background:#6c757d;color:white;text-decoration:none;border-radius:4px">Admin</a>
+</div>
+<h1>Lookups</h1>
+<h2>Sources</h2>
+<label>Name</label><input id="srcName" /><button id="srcSave">Save Source</button><button id="srcList">List</button><div id="srcRes"></div>
+<h2>Customer groups</h2>
+<label>Name</label><input id="grpName" /><button id="grpSave">Save Group</button><button id="grpList">List</button><div id="grpRes"></div>
+<h2>Nationalities</h2>
+<label>Name</label><input id="natName" /><button id="natSave">Save</button><button id="natList">List</button><div id="natRes"></div>
+<h2>Occupations</h2>
+<label>Name</label><input id="occName" /><button id="occSave">Save</button><button id="occList">List</button><div id="occRes"></div>
+<h2>Departments</h2>
+<label>Name</label><input id="depName" /><button id="depSave">Save</button><button id="depList">List</button><div id="depRes"></div>
+<script>
+(function(){
+  function hookup(prefix, saveUrl, listUrl, nameInput, saveBtn, listBtn, resDiv){
+    document.getElementById(saveBtn).addEventListener('click', ()=>{
+      const v = document.getElementById(nameInput).value;
+      fetch(saveUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name:v}), credentials: 'same-origin' })
+        .then(r=>r.json())
+        .then(b=>{
+          const data = (b && b.data) ? b.data : (b || {});
+          const id = data.id || data.id || (b && b.id) || '';
+          document.getElementById(resDiv).textContent = id ? ('Saved id=' + id) : (b.message || 'Saved');
+        })
+        .catch(e=>{ document.getElementById(resDiv).textContent='Err'; console.error(e); });
+    });
+    document.getElementById(listBtn).addEventListener('click', ()=>{
+      fetch(listUrl, { credentials: 'same-origin' }).then(r=>r.json()).then(result=>{
+        const list = (result && result.data) ? result.data : result;
+        document.getElementById(resDiv).innerHTML = '<ul>'+ (Array.isArray(list)?list.map(x=>'<li>'+x.id+' - '+(x.name||x.code||'')+'</li>').join('') : '') +'</ul>';
+      }).catch(e=>{ document.getElementById(resDiv).textContent='Err'; console.error(e); });
+    });
+  }
+  hookup('src','/api/lookups/sources','/api/lookups/sources','srcName','srcSave','srcList','srcRes');
+  hookup('grp','/api/lookups/customer-groups','/api/lookups/customer-groups','grpName','grpSave','grpList','grpRes');
+  hookup('nat','/api/lookups/nationalities','/api/lookups/nationalities','natName','natSave','natList','natRes');
+  hookup('occ','/api/lookups/occupations','/api/lookups/occupations','occName','occSave','occList','occRes');
+  hookup('dep','/api/lookups/departments','/api/lookups/departments','depName','depSave','depList','depRes');
+})();
+</script>
+</body>
+</html>

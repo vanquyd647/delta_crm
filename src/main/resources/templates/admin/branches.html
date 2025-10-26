@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Branches (admin)</title>
+</head>
+<body>
+<!-- admin navbar fragment -->
+<div id="adminNavPlaceholder"></div>
+<script>fetch('/fragments/admin-navbar.html').then(r=>r.text()).then(t=>{ document.getElementById('adminNavPlaceholder').innerHTML = t; }).catch(()=>{});</script>
+
+<h1>Chi nhánh</h1>
+<script>
+  window.location.href = '/branches';
+</script>
+<p>Navigating to branches...</p>
+</body>
+</html>

@@ -158,10 +158,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
-        // ✅ AUTH ENDPOINTS
+        // ✅ AUTH ENDPOINTS - skip public auth endpoints BUT allow /api/auth/whoami to be authenticated
         if (path.startsWith("/api/auth/")) {
-            log.debug("✅ Skipping JWT filter for auth endpoint: {}", path);
-            return true;
+            // Allow the whoami endpoint to be authenticated by this filter.
+            if (path.equals("/api/auth/whoami")) {
+                log.debug("🔒 Do NOT skip JWT filter for whoami: {}", path);
+            } else {
+                log.debug("✅ Skipping JWT filter for auth endpoint: {}", path);
+                return true;
+            }
         }
 
         // ✅ OAUTH2 ENDPOINTS

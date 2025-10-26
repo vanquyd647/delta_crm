@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hồ sơ khách hàng</title>
+  <style>body{font-family:Arial;margin:24px}label{display:block;margin-top:8px}input,select,textarea{width:100%;padding:8px;margin-top:4px;box-sizing:border-box}button{margin-top:12px;padding:8px 12px}</style>
+</head>
+<body>
+<!-- inserted navbar for UI flow -->
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px">
+  <a href="/index" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Home</a>
+  <a href="/appointments" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Appointments</a>
+  <a href="/appointment-assign" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Assign appointment</a>
+  <a href="/booking" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Booking</a>
+  <a href="/consultation" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Consultation</a>
+  <a href="/admin" style="padding:8px 12px;background:#6c757d;color:white;text-decoration:none;border-radius:4px">Admin</a>
+</div>
+
+  <h1>Hồ sơ khách hàng</h1>
+  <p>Nhập User ID rồi nhấn Load để lấy hồ sơ; hoặc điền thông tin và nhấn Save để tạo/cập nhật.</p>
+
+  <label>User ID</label>
+  <input id="userId" placeholder="Enter existing User ID (leave empty to create a profile for an existing account via Register)" />
+  <div style="font-size:13px;color:#555;margin-top:6px">Note: Profiles are attached to an existing user account. To create a new user account use the <a href="/register">Register</a> page, then enter that User ID here to link the profile.</div>
+  <button id="loadBtn">Load</button>
+
+  <form id="profileForm" style="margin-top:12px">
+    <label>Phone</label><input id="phone" />
+    <label>Họ và tên (fullName)</label><input id="fullName" />
+    <label>Ngày sinh</label><input id="birthDate" type="date" />
+    <label>Giới tính</label>
+    <select id="gender"><option value="">-- chọn --</option><option>MALE</option><option>FEMALE</option><option>OTHER</option></select>
+    <label>Email</label><input id="email" />
+    <label>Chi nhánh</label>
+    <select id="branchSelect"><option value="">-- loading... --</option></select>
+    <label>Nguồn</label>
+    <select id="sourceSelect"><option value="">-- loading... --</option></select>
+    <label>Chi tiết nguồn</label><input id="sourceDetail" />
+    <label>Nhóm khách hàng (IDs, comma-separated)</label><input id="groups" placeholder="1,2" />
+    <label>Địa chỉ</label><textarea id="address"></textarea>
+    <div>
+      <button type="button" id="saveBtn">Save</button>
+      <button type="button" id="clearBtn">Clear</button>
+    </div>
+  </form>
+
+  <div id="msg" style="margin-top:12px"></div>
+
+<script>
+(function(){
+  const userIdEl = document.getElementById('userId');
+  const loadBtn = document.getElementById('loadBtn');
+  const phone = document.getElementById('phone');
+  const fullName = document.getElementById('fullName');
+  const birthDate = document.getElementById('birthDate');
+  const gender = document.getElementById('gender');
+  const email = document.getElementById('email');
+  const branchSelect = document.getElementById('branchSelect');
+  const sourceSelect = document.getElementById('sourceSelect');
+  const sourceDetail = document.getElementById('sourceDetail');
+  const groups = document.getElementById('groups');
+  const address = document.getElementById('address');
+  const saveBtn = document.getElementById('saveBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const msg = document.getElementById('msg');
+
+  function show(m, ok){ msg.textContent = m; msg.style.color = ok? 'green':'red'; }
+  function readCsrf(){ const name='XSRF-TOKEN='; const parts=document.cookie.split(';'); for(let p of parts){ p=p.trim(); if(p.indexOf(name)===0) return decodeURIComponent(p.substring(name.length)); } return null }
+
+  function loadLookups(){
+    fetch('/api/branches').then(r=>r.json()).then(list=>{
+      branchSelect.innerHTML='<option value="">-- none --</option>';
+      list.forEach(b=>{ const o=document.createElement('option'); o.value=b.id; o.textContent=b.name; branchSelect.appendChild(o); });
+    }).catch(()=>{});
+    fetch('/api/lookups/sources').then(r=>r.json()).then(list=>{
+      sourceSelect.innerHTML='<option value="">-- none --</option>';
+      list.forEach(s=>{ const o=document.createElement('option'); o.value=s.id; o.textContent=s.name; sourceSelect.appendChild(o); });
+    }).catch(()=>{});
+  }
+
+  loadLookups();
+
+  loadBtn.addEventListener('click', ()=>{
+    const id = userIdEl.value && userIdEl.value.trim();
+    if(!id) { show('Nhập user id','error'); return; }
+    fetch('/api/user-profiles/'+encodeURIComponent(id)).then(r=>{
+      if(!r.ok) { show('Not found', false); return null; }
+      return r.json();
+    }).then(data=>{
+      if(!data) return;
+      phone.value = data.phone||'';
+      birthDate.value = data.birthDate||'';
+      gender.value = data.gender||'';
+      // fullName/email stored on user entity; we don't have endpoint to fetch user here
+      sourceSelect.value = data.sourceId || '';
+      sourceDetail.value = data.sourceDetail||'';
+      branchSelect.value = data.branchId || '';
+      groups.value = data.customerGroupIds ? data.customerGroupIds.join(',') : '';
+      address.value = data.address||'';
+      show('Loaded', true);
+    }).catch(err=>{ console.error(err); show('Load failed', false); });
+  });
+
+  saveBtn.addEventListener('click', ()=>{
+    const id = userIdEl.value && userIdEl.value.trim();
+    if(!id){ show('User id required', false); return; }
+    const payload = {
+      userId: Number(id),
+      phone: phone.value,
+      birthDate: birthDate.value || null,
+      gender: gender.value || null,
+      sourceId: sourceSelect.value||null,
+      sourceDetail: sourceDetail.value||null,
+      branchId: branchSelect.value||null,
+      customerGroupIds: groups.value ? groups.value.split(',').map(s=>Number(s.trim())).filter(Boolean) : [],
+      address: address.value||null
+    };
+    const headers = {'Content-Type':'application/json'};
+    const csrf = readCsrf(); if(csrf) headers['X-XSRF-TOKEN']=csrf;
+    fetch('/api/user-profiles', { method:'POST', headers, body: JSON.stringify(payload) })
+      .then(r=>r.json().then(b=>({status:r.status, body:b})))
+      .then(({status, body})=>{ if(status>=200&&status<300) show('Saved', true); else show('Save failed', false); })
+      .catch(e=>{ console.error(e); show('Save error', false); });
+  });
+
+  clearBtn.addEventListener('click', ()=>{ phone.value=''; fullName.value=''; birthDate.value=''; gender.value=''; email.value=''; sourceSelect.value=''; sourceDetail.value=''; groups.value=''; address.value=''; show('Cleared', true); });
+})();
+</script>
+</body>
+</html>

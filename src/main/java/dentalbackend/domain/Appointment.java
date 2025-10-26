@@ -42,6 +42,19 @@ public class Appointment {
     private Instant createdAt;
     private Instant updatedAt;
 
+    // --- New fields from V10
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assistant_id")
+    private UserEntity assistant;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "branch_id")
+    private Branch branch;
+
+    private Integer estimatedMinutes;
+
+    // --- end new fields
+
     @PrePersist
     public void prePersist() {
         createdAt = Instant.now();

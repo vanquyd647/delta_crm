@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Nha sĩ</title>
+    <style>
+        body{font-family:Arial, sans-serif;padding:24px;background:#f6f8fa}
+        .card{background:#fff;padding:16px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-bottom:12px}
+        table{width:100%;border-collapse:collapse;background:#fff}
+        th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+        label{display:block;margin-top:8px}
+        input,select{padding:8px;width:100%;box-sizing:border-box;margin-top:4px}
+        button{padding:8px 12px;margin-top:8px}
+        .small{font-size:0.9em;color:#666}
+    </style>
+</head>
+<body>
+<!-- admin navbar fragment -->
+<div id="adminNavPlaceholder"></div>
+<script>fetch('/fragments/admin-navbar.html').then(r=>r.text()).then(t=>{ document.getElementById('adminNavPlaceholder').innerHTML = t; }).catch(()=>{});</script>
+
+<h1>Quản lý Nha sĩ</h1>
+<a href="/admin">← Dashboard</a>
+<section style="margin-top:12px" class="card">
+    <h3>Thêm nha sĩ</h3>
+    <form id="createDentist">
+        <label for="dentistName">Họ tên</label>
+        <input id="dentistName" name="name" placeholder="Họ tên" required>
+
+        <label for="dentistUserId">Link User (optional)</label>
+        <input id="dentistUserId" name="userId" placeholder="User ID - để trống nếu muốn tạo riêng" type="number">
+        <div class="small">Nếu bạn muốn tạo tài khoản người dùng cho nha sĩ, hãy để trống và tạo user trước trong phần quản lý người dùng.</div>
+
+        <label for="dentistEmail">Email</label>
+        <input id="dentistEmail" name="email" placeholder="Email liên hệ (tùy chọn)">
+
+        <label for="dentistPhone">Số điện thoại</label>
+        <input id="dentistPhone" name="phone" placeholder="Số điện thoại (tùy chọn)">
+
+        <label for="dentistSpec">Chuyên môn</label>
+        <input id="dentistSpec" name="specialization" placeholder="VD: Răng hàm mặt">
+
+        <label for="dentistBio">Giới thiệu</label>
+        <input id="dentistBio" name="bio" placeholder="Giới thiệu (tùy chọn)">
+        <div>
+            <button type="submit">Tạo</button>
+            <button type="button" id="createAsUser">Tạo tài khoản & nha sĩ</button>
+        </div>
+    </form>
+    <div id="formMsg" class="small"></div>
+</section>
+<section style="margin-top:16px" class="card">
+    <h3>Danh sách</h3>
+    <table id="dentistsTable">
+        <thead><tr><th>ID</th><th>Họ tên</th><th>User</th><th>Chuyên môn</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+        <tbody><tr><td colspan="6">Đang tải...</td></tr></tbody>
+    </table>
+</section>
+<script>
+async function loadDentists(){
+    const resp = await fetch('/api/dentists/all', { credentials: 'same-origin' });
+    const json = await resp.json();
+    const list = (json && json.data) ? json.data : json;
+    const tbody = document.querySelector('#dentistsTable tbody');
+    if(!Array.isArray(list)||list.length===0){tbody.innerHTML='<tr><td colspan="6">Không có nha sĩ</td></tr>';return}
+    tbody.innerHTML = list.map(s=>`<tr>
+        <td>${s.id}</td>
+        <td>${s.name||s.fullName||''}</td>
+        <td>${s.userId?('<a href="/admin/users/'+s.userId+'">'+s.userId+'</a>'):'—'}</td>
+        <td>${s.specialization||''}</td>
+        <td>${s.active? 'Active':'Inactive'}</td>
+        <td><button data-id="${s.id}" class="delete">Xóa</button> <button data-id="${s.id}" class="edit">Sửa</button></td>
+    </tr>`).join('');
+
+    document.querySelectorAll('.delete').forEach(btn=>btn.onclick=async ()=>{
+        const id=btn.dataset.id;
+        if(!confirm('Xác nhận xóa?')) return;
+        const r = await fetch('/api/dentists/'+id,{method:'DELETE', credentials: 'same-origin'});
+        const jr = await r.json();
+        alert(jr.message||JSON.stringify(jr));
+        loadDentists();
+    });
+
+    document.querySelectorAll('.edit').forEach(btn=>btn.onclick=async ()=>{
+        const id=btn.dataset.id;
+        // simple edit: navigate to dentist detail page if exists
+        window.location.href = '/admin/dentists/' + id;
+    });
+}
+
+async function postDentist(payload){
+    const r = await fetch('/api/dentists',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload), credentials: 'same-origin'});
+    const jr = await r.json();
+    return {ok: r.ok, body: jr};
+}
+
+document.getElementById('createDentist').onsubmit = async function(e){
+    e.preventDefault();
+    const fd = new FormData(this);
+    const payload = { name: fd.get('name'), userId: fd.get('userId')?Number(fd.get('userId')):null, specialization: fd.get('specialization'), email: fd.get('email'), phone: fd.get('phone'), bio: fd.get('bio') };
+    const res = await postDentist(payload);
+    const msgDiv = document.getElementById('formMsg');
+    if(res.ok){ msgDiv.textContent = 'Tạo thành công'; msgDiv.style.color='green'; } else { msgDiv.textContent = 'Lỗi: ' + (res.body ? (res.body.message || JSON.stringify(res.body)) : 'Unknown'); msgDiv.style.color='red'; }
+    loadDentists();
+}
+
+// Create user + dentist flow
+document.getElementById('createAsUser').onclick = async function(){
+    const name = document.getElementById('dentistName').value.trim();
+    const email = document.getElementById('dentistEmail').value.trim();
+    if(!name || !email){ alert('Yêu cầu tên và email để tạo tài khoản'); return; }
+    // Create user via admin API - default password random (admin should reset)
+    const username = email.split('@')[0] + Math.floor(Math.random()*900+100);
+    const userPayload = { username, email, passwordHash: 'changeme', fullName: name, role: 'DENTIST', enabled: true };
+    // Note: backend expects a UserEntity-like payload; the save() method will resolve role enum.
+    const r1 = await fetch('/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(userPayload), credentials: 'same-origin'});
+    const jr1 = await r1.json();
+    if(!r1.ok){ alert('Tạo user thất bại: ' + (jr1.message||JSON.stringify(jr1))); return; }
+    const created = jr1.data || jr1;
+    const userId = created.id;
+    // Create dentist linked to user
+    const payload = { name, userId, email: email, phone: document.getElementById('dentistPhone').value, specialization: document.getElementById('dentistSpec').value, bio: document.getElementById('dentistBio').value };
+    const r2 = await postDentist(payload);
+    if(r2.ok){ alert('Tạo tài khoản và nha sĩ thành công'); loadDentists(); } else { alert('Tạo nha sĩ thất bại: ' + JSON.stringify(r2.body)); }
+}
+
+loadDentists();
+</script>
+</body>
+</html>

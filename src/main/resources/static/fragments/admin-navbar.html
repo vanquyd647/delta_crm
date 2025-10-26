@@ -1,0 +1,118 @@
+<div id="admin-navbar" style="font-family:Arial,Helvetica,sans-serif;margin-bottom:18px">
+  <link rel="stylesheet" href="/css/admin-navbar.css" />
+
+  <div class="nav" role="navigation" aria-label="Admin navigation">
+    <button aria-hidden="true" class="menu-toggle" id="adminMenuToggle">Menu</button>
+    <a href="/admin" class="admin-home" data-section="admin">Admin</a>
+    <a href="/admin/services" data-section="services">Services</a>
+    <a href="/admin/dentists" data-section="dentists">Dentists</a>
+    <a href="/admin/staffs" data-section="staffs">Staffs</a>
+    <a href="/admin/appointments" data-section="appointments">Appointments</a>
+    <a href="/admin/branches" data-section="branches">Branches</a>
+    <a href="/admin/lookups" data-section="lookups">Lookups</a>
+    <a href="/admin/user-groups" data-section="user-groups">User groups</a>
+    <a href="/admin/discounts" data-section="discounts">Discounts</a>
+    <a href="/admin/prescriptions" data-section="prescriptions">Prescriptions</a>
+
+    <div class="spacer" aria-hidden="true"></div>
+
+    <div class="user" id="adminUserStatus">Loading...</div>
+    <a id="adminLogoutBtn" class="btn" style="margin-left:8px">Logout</a>
+  </div>
+
+  <script>
+    (function(){
+      function setActive() {
+        try{
+          const path = window.location.pathname || '/admin';
+          const parts = path.replace(/\/+/g,'/').split('/').filter(Boolean);
+          // determine section key
+          let section = parts.length>1 && parts[0]==='admin' ? parts[1] : (parts[0] === 'admin' ? 'admin' : (parts[0] || 'admin'));
+          // fallback if at /admin
+          if (!section) section = 'admin';
+          document.querySelectorAll('#admin-navbar a[data-section]').forEach(a=>{
+            a.classList.toggle('active', a.getAttribute('data-section')===section);
+          });
+        }catch(e){console.warn(e)}
+      }
+
+      async function whoami(){
+        try{
+          // If an access token is stored in localStorage use it; otherwise rely on cookies
+          const token = localStorage.getItem('access_token');
+          const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+          const r = await fetch('/api/auth/whoami', { credentials: 'same-origin', headers: headers });
+          // If the API returns 401, redirect the browser to login so user doesn't see raw JSON
+          if (r.status === 401) {
+            try { window.location.href = '/login'; } catch(e) { /* ignore */ }
+            return null;
+          }
+          if (!r.ok) { document.getElementById('adminUserStatus').innerText = 'Not signed in'; return null; }
+          const j = await r.json();
+          return (j && j.data) ? j.data : j;
+        } catch(e){
+          console.warn('whoami failed', e);
+          document.getElementById('adminUserStatus').innerText='Not signed in';
+          return null;
+        }
+      }
+
+      function setVisibilityByRole(payload){
+        try{
+          const roles = [];
+          if (!payload) {
+            // hide admin-only links
+            document.querySelectorAll('#admin-navbar a').forEach(a=>{ a.style.display = a.classList.contains('admin-home') ? 'inline-block' : 'none' });
+            return;
+          }
+          const auths = payload.authorities || payload.roles || payload.role || [];
+          if (Array.isArray(auths)) auths.forEach(a=>roles.push((''+a).toUpperCase())); else roles.push((''+auths).toUpperCase());
+
+          const isAdmin = roles.some(r=>r.includes('ADMIN'));
+          // if not admin, hide some admin-only links
+          if (!isAdmin) {
+            // Allow only reading; hide destructive pages
+            document.querySelectorAll('#admin-navbar a[data-section]').forEach(a=>{
+              const s = a.getAttribute('data-section');
+              if (['services','dentists','appointments','discounts','user-groups','branches','prescriptions'].includes(s)) {
+                a.style.display = 'inline-block';
+              } else {
+                a.style.display = 'none';
+              }
+            });
+            document.getElementById('adminUserStatus').innerText = payload.username || payload.email || 'User';
+          } else {
+            document.querySelectorAll('#admin-navbar a').forEach(a=>a.style.display='inline-block');
+            document.getElementById('adminUserStatus').innerText = payload.username || payload.email || (payload.principalClass?payload.principalClass:'Admin');
+          }
+        }catch(e){ console.warn(e) }
+      }
+
+      async function init(){
+        setActive();
+        const p = await whoami();
+        setVisibilityByRole(p);
+      }
+
+      // Toggle menu for mobile
+      document.getElementById('adminMenuToggle').addEventListener('click', function(){
+        document.querySelector('#admin-navbar .nav').classList.toggle('collapsed');
+      });
+
+      // Logout handler
+      document.getElementById('adminLogoutBtn').addEventListener('click', async function(){
+        try{
+          await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+        }catch(e){}
+        try{ localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token'); localStorage.removeItem('user'); }catch(e){}
+        window.location.href = '/login';
+      });
+
+      // Run init
+      init();
+
+      // Also update active on history change
+      window.addEventListener('popstate', setActive);
+    })();
+  </script>
+</div>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hồ sơ nhân viên</title>
+  <style>body{font-family:Arial;margin:24px}label{display:block;margin-top:8px}input,select{width:100%;padding:8px;margin-top:4px}button{margin-top:12px;padding:8px 12px}</style>
+</head>
+<body>
+<!-- inserted navbar for UI flow -->
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px">
+  <a href="/index" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Home</a>
+  <a href="/appointments" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Appointments</a>
+  <a href="/appointment-assign" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Assign appointment</a>
+  <a href="/booking" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Booking</a>
+  <a href="/consultation" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Consultation</a>
+  <a href="/admin" style="padding:8px 12px;background:#6c757d;color:white;text-decoration:none;border-radius:4px">Admin</a>
+</div>
+
+  <h1>Hồ sơ nhân viên</h1>
+  <label>User ID</label>
+  <input id="userId" placeholder="Enter existing User ID (or use Register to create a new user)" />
+  <button id="loadBtn">Load</button>
+  <div style="font-size:13px;color:#555;margin-top:6px">Note: Staff profiles are linked to an existing user account. Create a user via <a href="/register">Register</a> and then use its ID here.</div>
+
+  <div id="userRoleInfo" style="margin-top:8px;color:#333"></div>
+
+  <div id="form" style="margin-top:12px">
+    <label>Code</label><input id="code" />
+    <label>Nickname</label><input id="nickname" />
+    <label>Company Email</label><input id="companyEmail" />
+    <label>Department</label><select id="departmentSelect"><option>-- loading --</option></select>
+    <label>Branch</label><select id="branchSelect"><option>-- loading --</option></select>
+    <label>Phone</label><input id="phone" />
+    <label>Birth date</label><input id="birthDate" type="date" />
+    <div>
+      <button id="saveBtn">Save</button>
+      <button id="clearBtn">Clear</button>
+    </div>
+  </div>
+  <div id="msg" style="margin-top:12px"></div>
+<script>
+(function(){
+  const userId = document.getElementById('userId');
+  const loadBtn = document.getElementById('loadBtn');
+  const code = document.getElementById('code');
+  const nickname = document.getElementById('nickname');
+  const companyEmail = document.getElementById('companyEmail');
+  const departmentSelect = document.getElementById('departmentSelect');
+  const branchSelect = document.getElementById('branchSelect');
+  const phone = document.getElementById('phone');
+  const birthDate = document.getElementById('birthDate');
+  const saveBtn = document.getElementById('saveBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const msg = document.getElementById('msg');
+  const userRoleInfo = document.getElementById('userRoleInfo');
+
+  function show(m, ok){ msg.textContent = m; msg.style.color = ok? 'green':'red'; }
+  function loadLookups(){
+    fetch('/api/lookups/departments').then(r=>r.json()).then(list=>{ departmentSelect.innerHTML=''; list.forEach(d=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=d.name; departmentSelect.appendChild(o); }); }).catch(()=>{});
+    fetch('/api/branches').then(r=>r.json()).then(list=>{ branchSelect.innerHTML=''; list.forEach(b=>{ const o=document.createElement('option'); o.value=b.id; o.textContent=b.name; branchSelect.appendChild(o); }); }).catch(()=>{});
+  }
+  loadLookups();
+
+  loadBtn.addEventListener('click', ()=>{
+    const id = userId.value && userId.value.trim(); if(!id){ show('User id required', false); return; }
+    // fetch staff profile by user id
+    fetch('/api/staff-profiles/by-user/'+encodeURIComponent(id), { credentials: 'same-origin' }).then(async r=>{
+      const json = await r.json().catch(()=>null);
+      if(!r.ok){ // show message from ApiResponse if available
+        const msgText = json && json.message ? json.message : 'Not found'; show(msgText, false); return null; }
+      const dto = (json && json.data) ? json.data : json;
+      code.value=dto.code||''; nickname.value=dto.nickname||''; companyEmail.value=dto.companyEmail||''; phone.value=dto.phone||''; birthDate.value=dto.birthDate||''; departmentSelect.value = dto.departmentId||''; branchSelect.value = dto.branchId||''; show('Loaded', true);
+    }).catch(e=>{ console.error(e); show('Error', false); });
+
+    // fetch user info (role) - admin only
+    fetch('/api/users/'+encodeURIComponent(id), { credentials: 'same-origin' }).then(async r=>{
+      const j = await r.json().catch(()=>null);
+      if(!r.ok){ userRoleInfo.textContent = 'User info not available'; return; }
+      const u = j && j.data ? j.data : j;
+      const role = u && u.role ? u.role : (u && u.roleEntity && u.roleEntity.name ? u.roleEntity.name : 'UNKNOWN');
+      userRoleInfo.innerHTML = 'User role: <strong>' + role + '</strong> &nbsp; <button id="assignRoleBtn">Gán vai trò nhân viên</button>';
+      document.getElementById('assignRoleBtn').onclick = function(){
+        const desired = prompt('Nh��p vai trò muốn gán (DENTIST, RECEPTIONIST, ADMIN):', 'RECEPTIONIST'); if(!desired) return;
+        fetch('/api/users/'+encodeURIComponent(id)+'/role?role='+encodeURIComponent(desired), { method: 'PATCH', credentials: 'same-origin' }).then(async r2=>{ const j2 = await r2.json().catch(()=>null); if(r2.ok){ alert((j2 && j2.message) ? j2.message : 'Role updated'); } else { alert('Failed: ' + ((j2 && j2.message)? j2.message : 'Error')); } });
+      };
+    }).catch(e=>{ console.error(e); userRoleInfo.textContent = 'User info error'; });
+  });
+
+  saveBtn.addEventListener('click', ()=>{
+    const id = userId.value && userId.value.trim(); if(!id){ show('User id required', false); return; }
+    const payload = { userId: Number(id), code: code.value, nickname: nickname.value, companyEmail: companyEmail.value, departmentId: departmentSelect.value||null, branchId: branchSelect.value||null, birthDate: birthDate.value||null, phone: phone.value||null };
+    fetch('/api/staff-profiles', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload), credentials: 'same-origin' }).then(async r=>{ const j = await r.json().catch(()=>null); if(r.ok) show((j && j.message)? j.message : 'Saved', true); else show((j && j.message)? j.message : 'Save failed', false); }).catch(e=>{ console.error(e); show('Save error', false); });
+  });
+
+  clearBtn.addEventListener('click', ()=>{ code.value=''; nickname.value=''; companyEmail.value=''; phone.value=''; birthDate.value=''; departmentSelect.value=''; branchSelect.value=''; show('Cleared', true); });
+})();
+</script>
+</body>
+</html>

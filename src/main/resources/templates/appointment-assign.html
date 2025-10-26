@@ -1,0 +1,217 @@
+<!-- Explanation: New template page for assigning an assistant/branch/estimated time to an appointment.
+Provides a simple UI that reads appointment id from querystring (?id=123), fetches available branches,
+accepts assistantId and estimated minutes, and sends a PATCH request to /api/appointments/{id}/assign
+using query parameters. Handles CSRF token if present via cookie named XSRF-TOKEN. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Assign Appointment</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 16px; }
+        label { display:block; margin-top: 12px; font-weight:600; }
+        input, select { width:100%; padding:8px; margin-top:6px; box-sizing:border-box; }
+        button { margin-top:12px; padding:10px 16px; }
+        .row { display:flex; gap:12px; }
+        .col { flex:1; }
+        .msg { margin-top:12px; padding:10px; border-radius:4px; }
+        .msg.success { background:#e6ffed; border:1px solid #bde6c6; color:#06641a; }
+        .msg.error { background:#ffecec; border:1px solid #f0b4b4; color:#7a0b0b; }
+        /* navbar */
+        .nav{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+        .nav a{padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px}
+        .nav a.secondary{background:#6c757d}
+    </style>
+</head>
+<body>
+<div class="nav">
+    <a href="/index">Home</a>
+    <a href="/appointments">Appointments</a>
+    <a href="/appointment-assign">Assign appointment</a>
+    <a href="/booking">Booking</a>
+    <a href="/consultation">Consultation</a>
+    <a href="/admin" class="secondary">Admin</a>
+</div>
+<h1>Assign Assistant / Branch to Appointment</h1>
+<p>Use this page to assign an assistant, choose branch and set estimated duration for an appointment.</p>
+
+<div>
+    <label for="appointmentId">Appointment ID (from URL or enter manually)</label>
+    <input id="appointmentId" placeholder="e.g. 123" />
+    <button id="loadBtn">Load appointment</button>
+</div>
+
+<div id="formArea" style="display:none; margin-top:18px;">
+    <label>Appointment: <span id="apptLabel"></span></label>
+
+    <div class="row">
+        <div class="col">
+            <label for="assistantId">Assistant ID</label>
+            <input id="assistantId" placeholder="Enter assistant user ID (numeric)" />
+        </div>
+        <div class="col">
+            <label for="estimatedMinutes">Estimated Minutes</label>
+            <input id="estimatedMinutes" type="number" min="0" placeholder="e.g. 30" />
+        </div>
+    </div>
+
+    <label for="branchSelect">Branch</label>
+    <select id="branchSelect">
+        <option value="">-- choose branch --</option>
+    </select>
+
+    <div style="margin-top:12px; display:flex; gap:8px;">
+        <button id="assignBtn">Assign</button>
+        <button id="clearBtn" type="button">Clear</button>
+        <a href="/appointments" style="display:inline-block; padding:8px 12px; background:#6c757d; color:white; text-decoration:none; border-radius:4px;">Back to appointments</a>
+    </div>
+
+    <div id="message" class="msg" style="display:none"></div>
+</div>
+
+<script>
+(function(){
+    const qs = new URLSearchParams(window.location.search);
+    const idFromUrl = qs.get('id');
+    const appointmentIdInput = document.getElementById('appointmentId');
+    const loadBtn = document.getElementById('loadBtn');
+    const formArea = document.getElementById('formArea');
+    const apptLabel = document.getElementById('apptLabel');
+    const assistantInput = document.getElementById('assistantId');
+    const estimatedInput = document.getElementById('estimatedMinutes');
+    const branchSelect = document.getElementById('branchSelect');
+    const assignBtn = document.getElementById('assignBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const message = document.getElementById('message');
+
+    if (idFromUrl) appointmentIdInput.value = idFromUrl;
+
+    function showMessage(text, type) {
+        message.textContent = text;
+        message.className = 'msg ' + (type === 'success' ? 'success' : 'error');
+        message.style.display = 'block';
+    }
+    function hideMessage(){ message.style.display = 'none'; }
+
+    // Load branch list
+    function loadBranches(){
+        fetch('/api/branches')
+            .then(r => {
+                if (!r.ok) throw new Error('Failed to load branches');
+                return r.json();
+            })
+            .then(list => {
+                branchSelect.innerHTML = '<option value="">-- choose branch --</option>';
+                list.forEach(b => {
+                    const o = document.createElement('option');
+                    o.value = b.id;
+                    o.textContent = b.name + (b.code ? ' (' + b.code + ')' : '');
+                    branchSelect.appendChild(o);
+                });
+            })
+            .catch(err => console.error('branches load error', err));
+    }
+
+    // Attempt to load appointment basic info by calling the REST API (if exists)
+    function loadAppointment(apptId){
+        // try GET /api/appointments/{id} — if not implemented, just show id
+        fetch('/api/appointments/' + encodeURIComponent(apptId))
+            .then(r => {
+                if (!r.ok) {
+                    // fallback: show id only
+                    apptLabel.textContent = '#' + apptId;
+                    formArea.style.display = 'block';
+                    return null;
+                }
+                return r.json();
+            })
+            .then(data => {
+                if (data) {
+                    const labelParts = ['#' + (data.id || apptId)];
+                    if (data.customer && data.customer.id) labelParts.push('Customer ID: ' + data.customer.id);
+                    if (data.dentist && data.dentist.id) labelParts.push('Dentist ID: ' + data.dentist.id);
+                    apptLabel.textContent = labelParts.join(' — ');
+                }
+                formArea.style.display = 'block';
+            })
+            .catch(err => {
+                console.warn('Could not fetch appointment details', err);
+                apptLabel.textContent = '#' + apptId;
+                formArea.style.display = 'block';
+            });
+    }
+
+    // Read CSRF token from cookie (Spring Security default cookie name XSRF-TOKEN)
+    function readCsrfTokenFromCookie(){
+        const name = 'XSRF-TOKEN=';
+        const ca = document.cookie.split(';');
+        for(let c of ca){
+            c = c.trim();
+            if (c.indexOf(name) === 0) return decodeURIComponent(c.substring(name.length));
+        }
+        return null;
+    }
+
+    function assign(apptId){
+        hideMessage();
+        const assistantId = assistantInput.value ? assistantInput.value.trim() : null;
+        const estimated = estimatedInput.value ? estimatedInput.value.trim() : null;
+        const branchId = branchSelect.value ? branchSelect.value : null;
+        if (!assistantId && !branchId && !estimated) {
+            showMessage('Please enter at least one value to assign (assistant, branch or estimated minutes).', 'error');
+            return;
+        }
+
+        // Build query params
+        const params = new URLSearchParams();
+        if (assistantId) params.set('assistantId', assistantId);
+        if (branchId) params.set('branchId', branchId);
+        if (estimated) params.set('estimatedMinutes', estimated);
+
+        const url = '/api/appointments/' + encodeURIComponent(apptId) + '/assign?' + params.toString();
+
+        const headers = {};
+        const csrf = readCsrfTokenFromCookie();
+        if (csrf) headers['X-XSRF-TOKEN'] = csrf;
+
+        fetch(url, { method: 'PATCH', headers })
+            .then(r => r.json().then(body => ({status: r.status, body})))
+            .then(({status, body}) => {
+                if (status >= 200 && status < 300) {
+                    showMessage('Appointment updated successfully.', 'success');
+                } else {
+                    console.error('assign failed', body);
+                    showMessage('Failed to update appointment: ' + (body && body.message ? body.message : 'server error'), 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showMessage('Request failed: ' + err.message, 'error');
+            });
+    }
+
+    loadBranches();
+
+    loadBtn.addEventListener('click', function(){
+        const apptId = appointmentIdInput.value && appointmentIdInput.value.trim();
+        if (!apptId) { showMessage('Please enter an appointment id', 'error'); return; }
+        loadAppointment(apptId);
+    });
+
+    assignBtn.addEventListener('click', function(){
+        const apptId = appointmentIdInput.value && appointmentIdInput.value.trim();
+        if (!apptId) { showMessage('Please load an appointment id first', 'error'); return; }
+        assign(apptId);
+    });
+
+    clearBtn.addEventListener('click', function(){
+        assistantInput.value = '';
+        estimatedInput.value = '';
+        branchSelect.value = '';
+        hideMessage();
+    });
+})();
+</script>
+</body>
+</html>

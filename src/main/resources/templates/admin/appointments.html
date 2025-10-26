@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Lịch hẹn</title>
+    <style>
+        body{font-family:Arial, sans-serif;padding:24px;background:#f6f8fa}
+        table{width:100%;border-collapse:collapse;background:#fff}
+        th,td{padding:8px;border-bottom:1px solid #eee}
+    </style>
+</head>
+<body>
+<!-- admin navbar fragment -->
+<div id="adminNavPlaceholder"></div>
+<script>fetch('/fragments/admin-navbar.html').then(r=>r.text()).then(t=>{ document.getElementById('adminNavPlaceholder').innerHTML = t; }).catch(()=>{});</script>
+
+<h1>Quản lý Lịch hẹn</h1>
+<a href="/admin">← Dashboard</a>
+<section style="margin-top:12px">
+    <table id="apptsTable">
+        <thead><tr><th>ID</th><th>Khách</th><th>Dịch vụ</th><th>Ngày</th><th>Giờ</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+        <tbody><tr><td colspan="7">Đang tải...</td></tr></tbody>
+    </table>
+</section>
+<script>
+async function loadAppts(){
+    const resp = await fetch('/api/appointments', { credentials: 'same-origin' });
+    const json = await resp.json();
+    const list = (json && json.data) ? json.data : json;
+    const tb = document.querySelector('#apptsTable tbody');
+    if(!Array.isArray(list)||list.length===0){tb.innerHTML='<tr><td colspan="7">Không có lịch hẹn</td></tr>';return}
+    tb.innerHTML = list.map(a=>`<tr><td>${a.id}</td><td>${a.fullName||a.patientName||''}</td><td>${a.serviceName||''}</td><td>${a.date||a.scheduledTime||''}</td><td>${a.time||''}</td><td>${a.status||''}</td><td><button data-id="${a.id}" class="delete">Xóa</button></td></tr>`).join('');
+    document.querySelectorAll('.delete').forEach(btn=>btn.onclick=async ()=>{
+        const id=btn.dataset.id; if(!confirm('Xác nhận xóa?')) return;
+        const r = await fetch('/api/appointments/'+id,{method:'DELETE', credentials: 'same-origin'});
+        const jr = await r.json();
+        // jr may be ApiResponse-like or custom map
+        alert(jr.message || jr.msg || JSON.stringify(jr));
+        loadAppts();
+    });
+}
+
+loadAppts();
+</script>
+</body>
+</html>

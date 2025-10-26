@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quản lý Nhân viên</title>
+  <style>body{font-family:Arial;padding:18px;background:#f6f8fa}table{width:100%;border-collapse:collapse;background:#fff}th,td{padding:8px;border-bottom:1px solid #eee}label{display:block;margin-top:8px}input,select{width:100%;padding:8px;margin-top:4px}button{margin-top:12px;padding:8px 12px}</style>
+</head>
+<body>
+<div id="adminNavPlaceholder"></div>
+<script>fetch('/fragments/admin-navbar.html').then(r=>r.text()).then(t=>{ document.getElementById('adminNavPlaceholder').innerHTML = t; }).catch(()=>{});</script>
+<h1>Quản lý Nhân viên</h1>
+<a href="/admin">← Dashboard</a>
+<section style="margin-top:12px;background:#fff;padding:12px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+  <h3>Tạo tài khoản nhân viên</h3>
+  <form id="createStaffForm">
+    <label>Username</label><input id="username" required>
+    <label>Email</label><input id="email" required>
+    <label>Password</label><input id="password" type="password" required>
+    <label>Họ tên</label><input id="fullName">
+    <label>Vai trò</label>
+    <select id="role"><option>RECEPTIONIST</option><option>DENTIST</option><option>ADMIN</option></select>
+    <label><input type="checkbox" id="createProfile"> Tạo hồ sơ nhân viên</label>
+    <div id="profileFields" style="display:none;margin-top:8px">
+      <label>Code</label><input id="code">
+      <label>Nickname</label><input id="nickname">
+      <label>Company Email</label><input id="companyEmail">
+      <label>Phone</label><input id="phone">
+    </div>
+    <button type="submit">Tạo</button>
+  </form>
+  <div id="msg" style="margin-top:8px"></div>
+</section>
+<section style="margin-top:12px;background:#fff;padding:12px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+  <h3>Danh sách nhân viên (không bao gồm khách hàng)</h3>
+  <table id="staffTable"><thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Full name</th><th>Role</th><th>Enabled</th><th>Profile</th><th>Actions</th></tr></thead><tbody><tr><td colspan="8">Đang tải...</td></tr></tbody></table>
+</section>
+<script>
+document.getElementById('createProfile').addEventListener('change', function(){ document.getElementById('profileFields').style.display = this.checked ? 'block' : 'none'; });
+async function loadStaffs(){ const r = await fetch('/api/admin/staffs', { credentials:'same-origin' }); const j = await r.json(); const data = j && j.data ? j.data : j; const tb = document.querySelector('#staffTable tbody'); if(!Array.isArray(data)||data.length===0){ tb.innerHTML='<tr><td colspan="8">Không có nhân viên</td></tr>'; return } tb.innerHTML = data.map(u=>`<tr><td>${u.id}</td><td>${u.username}</td><td>${u.email||''}</td><td>${u.fullName||''}</td><td>${u.role||''}</td><td>${u.enabled? 'Yes':'No'}</td><td>${u.staffProfileId?('<a href="/staff-profile?userId='+u.id+'">Profile</a>'):'—'}</td><td><button class="editBtn" data-id="${u.id}">Edit</button> <button class="deleteBtn" data-id="${u.id}">Delete</button></td></tr>`).join('');
+
+    // attach handlers
+    document.querySelectorAll('.editBtn').forEach(btn=>btn.onclick=async ()=>{
+        const id = btn.dataset.id;
+        // fetch current user data via admin API
+        const r2 = await fetch('/api/users/'+encodeURIComponent(id), { credentials: 'same-origin' });
+        if(!r2.ok){ alert('Unable to fetch user data'); return; }
+        const j2 = await r2.json(); const user = j2 && j2.data ? j2.data : j2;
+        const newEmail = prompt('Email', user.email || '');
+        const newFullName = prompt('Full name', user.fullName || '');
+        const newRole = prompt('Role (DENTIST, RECEPTIONIST, ADMIN)', user.role || 'RECEPTIONIST');
+        const enabled = confirm('Enable account? OK = enabled, Cancel = disabled');
+        const payload = { email: newEmail, fullName: newFullName, role: newRole, enabled };
+        const r3 = await fetch('/api/admin/staffs/'+encodeURIComponent(id), { method: 'PUT', headers:{'Content-Type':'application/json'}, credentials:'same-origin', body: JSON.stringify(payload) });
+        const j3 = await r3.json(); if(r3.ok){ alert((j3 && j3.message)? j3.message : 'Updated'); loadStaffs(); } else { alert('Update failed: ' + ((j3 && j3.message)? j3.message : 'Error')); }
+    });
+
+    document.querySelectorAll('.deleteBtn').forEach(btn=>btn.onclick=async ()=>{
+        const id = btn.dataset.id;
+        if(!confirm('Delete user and profile? OK deletes user, Cancel will delete only profile')) return;
+        const rDel = await fetch('/api/admin/staffs/'+encodeURIComponent(id), { method: 'DELETE', credentials: 'same-origin' });
+        const jDel = await rDel.json(); if(rDel.ok){ alert((jDel && jDel.message)? jDel.message : 'Deleted'); loadStaffs(); } else { alert('Delete failed: ' + ((jDel && jDel.message)? jDel.message : 'Error')); }
+    });
+ }
+
+document.getElementById('createStaffForm').onsubmit = async function(e){ e.preventDefault(); const payload = { username: document.getElementById('username').value.trim(), email: document.getElementById('email').value.trim(), password: document.getElementById('password').value, role: document.getElementById('role').value, fullName: document.getElementById('fullName').value, createProfile: document.getElementById('createProfile').checked };
+ if(payload.createProfile){ payload.code = document.getElementById('code').value; payload.nickname = document.getElementById('nickname').value; payload.companyEmail = document.getElementById('companyEmail').value; payload.phone = document.getElementById('phone').value; }
+ const r = await fetch('/api/admin/staffs', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin', body: JSON.stringify(payload)});
+ const j = await r.json(); const msg = document.getElementById('msg'); if(r.ok){ msg.style.color='green'; msg.textContent = (j && j.message) ? j.message : 'Created';
+    // If server indicates existing staff profile, show link
+    if (j && j.data && j.data.staffProfileAlreadyExists && j.data.staffProfileId) {
+      msg.textContent = 'Staff profile already exists. ';
+      const a = document.createElement('a'); a.href = '/staff-profile?userId=' + encodeURIComponent((j.data.user && j.data.user.id) ? j.data.user.id : ''); a.textContent = 'Open profile'; a.style.marginLeft='8px'; msg.appendChild(a);
+    }
+     loadStaffs(); } else { msg.style.color='red'; msg.textContent = (j && j.message) ? j.message : 'Failed'; }
+}
+loadStaffs();
+</script>
+</body>
+</html>

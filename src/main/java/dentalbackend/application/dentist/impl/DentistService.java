@@ -10,7 +10,9 @@ import dentalbackend.domain.port.UserPort;
 import dentalbackend.domain.UserEntity;
 import dentalbackend.domain.UserRole;
 import dentalbackend.domain.AuthProvider;
+import dentalbackend.domain.Role;
 import dentalbackend.infrastructure.email.EmailService;
+import dentalbackend.repository.RoleRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ public class DentistService implements DentistUseCase {
     private final EmailService emailService;
     private final dentalbackend.repository.UserProfileRepository profileRepo;
     private final dentalbackend.repository.UserPreferencesRepository preferencesRepo;
+    private final RoleRepository roleRepository;
 
     @Override
     public List<DentistResponse> listActive() {
@@ -81,6 +84,14 @@ public class DentistService implements DentistUseCase {
                         .enabled(true)
                         .build();
                 try {
+                    // Resolve role entity and attach if exists (prevents duplicate inserts)
+                    try {
+                        Role roleEntity = roleRepository.findByName(UserRole.DENTIST).orElse(null);
+                        newUser.setRoleEntity(roleEntity);
+                    } catch (Exception ex) {
+                        // ignore resolution errors
+                    }
+
                     UserEntity saved = userPort.save(newUser);
                     linkedUserId = saved.getId();
 

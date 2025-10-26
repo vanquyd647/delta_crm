@@ -95,4 +95,10 @@ public class UserController {
         var updated = userService.updateServiceStatus(id, serviceStatus);
         return ApiResponse.ok("Service status updated", updated);
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{id}")
+    public ApiResponse<?> getUserById(@PathVariable Long id) {
+        return userService.findById(id).map(u -> ApiResponse.ok(u)).orElse(ApiResponse.error("User not found"));
+    }
 }

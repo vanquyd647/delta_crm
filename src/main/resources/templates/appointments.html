@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Appointments</title>
+<style>body{font-family:Arial;margin:24px}label{display:block;margin-top:8px}input,select,button{width:100%;padding:8px;margin-top:4px} /* navbar */ .nav{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px} .nav a{padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px} .nav a.secondary{background:#6c757d}</style>
+</head>
+<body>
+<!-- inserted navbar for UI flow between pages -->
+<div class="nav">
+    <a href="/index">Home</a>
+    <a href="/appointments">Appointments</a>
+    <a href="/appointment-assign">Assign appointment</a>
+    <a href="/booking">Booking</a>
+    <a href="/consultation">Consultation</a>
+    <a href="/admin" class="secondary">Admin</a>
+</div>
+
+<h1>Appointments (quick assign)</h1>
+<label>Appointment ID</label><input id="apptId" />
+<label>Assistant ID</label><input id="assistantId" />
+<label>Branch</label><select id="branchSelect"><option>-- loading --</option></select>
+<label>Estimated minutes</label><input id="estimated" type="number" />
+<div style="display:flex;gap:8px">
+  <div style="flex:1"><button id="assignBtn">Assign</button></div>
+  <div style="flex:1"><button id="openAssignBtn" type="button">Open assign page</button></div>
+</div>
+<div id="res"></div>
+<script>
+(function(){ const apptId=document.getElementById('apptId'); const assistantId=document.getElementById('assistantId'); const branchSelect=document.getElementById('branchSelect'); const estimated=document.getElementById('estimated'); const assignBtn=document.getElementById('assignBtn'); const res=document.getElementById('res'); const openAssignBtn=document.getElementById('openAssignBtn');
+function loadBranches(){ fetch('/api/branches').then(r=>{ if(!r.ok) return []; return r.json(); }).then(l=>{ branchSelect.innerHTML=''; l.forEach(b=>{ const o=document.createElement('option'); o.value=b.id; o.textContent=b.name; branchSelect.appendChild(o); }); }).catch(()=>{ branchSelect.innerHTML='<option>-- failed to load --</option>'; }); }
+loadBranches(); assignBtn.addEventListener('click', ()=>{ if(!apptId.value) { res.textContent='Appt id required'; return; } const params = new URLSearchParams(); if(assistantId.value) params.set('assistantId', assistantId.value); if(branchSelect.value) params.set('branchId', branchSelect.value); if(estimated.value) params.set('estimatedMinutes', estimated.value); fetch('/api/appointments/'+encodeURIComponent(apptId.value)+'/assign?'+params.toString(), { method:'PATCH' }).then(r=>{ if(r.ok) res.textContent='Assigned'; else r.json().then(b=>res.textContent='Failed: '+(b.message||JSON.stringify(b))).catch(()=>res.textContent='Failed'); }).catch(e=>{ console.error(e); res.textContent='Error' }); });
+// open assign page flow: navigate to appointment-assign with id in querystring
+openAssignBtn.addEventListener('click', ()=>{
+  const id = (apptId.value || '').trim();
+  const url = id ? ('/appointment-assign?id='+encodeURIComponent(id)) : '/appointment-assign';
+  window.location.href = url;
+});
+})();
+</script>
+</body>
+</html>

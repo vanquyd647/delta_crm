@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Đơn thuốc</title>
+  <style>body{font-family:Arial;margin:24px}label{display:block;margin-top:8px}input,textarea{width:100%;padding:8px;margin-top:4px}button{margin-top:12px;padding:8px 12px}</style>
+</head>
+<body>
+<!-- inserted navbar for UI flow -->
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px">
+  <a href="/index" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Home</a>
+  <a href="/appointments" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Appointments</a>
+  <a href="/appointment-assign" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Assign appointment</a>
+  <a href="/booking" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Booking</a>
+  <a href="/consultation" style="padding:8px 12px;background:#0d6efd;color:white;text-decoration:none;border-radius:4px">Consultation</a>
+  <a href="/admin" style="padding:8px 12px;background:#6c757d;color:white;text-decoration:none;border-radius:4px">Admin</a>
+</div>
+  <h1>Đơn thuốc</h1>
+  <label>Appointment</label>
+  <select id="appointmentSelect"><option value="">-- loading appointments --</option></select>
+  <label>Patient</label>
+  <select id="patientSelect"><option value="">-- loading patients --</option></select>
+  <label>Doctor (or Prescribing Doctor)</label>
+  <select id="doctorSelect"><option value="">-- loading doctors/assistants --</option></select>
+   <label>Nội dung</label><textarea id="content"></textarea>
+   <div>
+     <button id="saveBtn">Save</button>
+     <button id="listBtn">List</button>
+   </div>
+   <div id="result" style="margin-top:12px"></div>
+ <script>
+(function(){
+  const appointmentSelect = document.getElementById('appointmentSelect');
+  const patientSelect = document.getElementById('patientSelect');
+  const doctorSelect = document.getElementById('doctorSelect');
+  const content = document.getElementById('content');
+  const saveBtn = document.getElementById('saveBtn');
+  const listBtn = document.getElementById('listBtn');
+  const result = document.getElementById('result');
+
+  async function loadAppointments(){
+    try{
+      const r = await fetch('/api/appointments');
+      if(!r.ok) throw new Error('load appts failed');
+      const list = await r.json();
+      appointmentSelect.innerHTML = '<option value="">-- choose appointment --</option>';
+      list.forEach(a=>{
+        const o = document.createElement('option'); o.value = a.id; o.textContent = a.label; appointmentSelect.appendChild(o);
+      });
+    }catch(e){ appointmentSelect.innerHTML = '<option value="">-- failed to load --</option>'; }
+  }
+
+  async function loadPatients(){
+    try{
+      const r = await fetch('/api/user-profiles/list');
+      if(!r.ok) throw new Error('load patients failed');
+      const list = await r.json();
+      patientSelect.innerHTML = '<option value="">-- choose patient --</option>';
+      list.forEach(p=>{ const o=document.createElement('option'); o.value = p.id; o.textContent = p.name || ('#'+p.id); patientSelect.appendChild(o); });
+    }catch(e){ patientSelect.innerHTML = '<option value="">-- failed to load --</option>'; }
+  }
+
+  async function loadDoctors(){
+    try{
+      const r = await fetch('/api/staff-profiles/list');
+      if(!r.ok) throw new Error('load staff failed');
+      const list = await r.json();
+      doctorSelect.innerHTML = '<option value="">-- choose doctor --</option>';
+      list.forEach(s=>{ const o=document.createElement('option'); o.value = s.id; o.textContent = (s.name || s.code || ('#'+s.id)); doctorSelect.appendChild(o); });
+    }catch(e){ doctorSelect.innerHTML = '<option value="">-- failed to load --</option>'; }
+  }
+
+  loadAppointments(); loadPatients(); loadDoctors();
+
+  saveBtn.addEventListener('click', ()=>{
+    const payload = {
+      appointmentId: appointmentSelect.value ? Number(appointmentSelect.value) : null,
+      patientId: patientSelect.value ? Number(patientSelect.value) : null,
+      doctorId: doctorSelect.value ? Number(doctorSelect.value) : null,
+      content: content.value
+    };
+    fetch('/api/prescriptions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+      .then(r=>r.json()).then(b=>{ result.textContent = 'Saved id=' + (b.id || '') }).catch(e=>{ console.error(e); result.textContent='Error'; });
+  });
+
+  listBtn.addEventListener('click', ()=>{ fetch('/api/prescriptions').then(r=>r.json()).then(list=>{ result.innerHTML = '<ul>'+list.map(p=>'<li>'+p.id+' - '+(p.content? p.content.substring(0,40):'')+'</li>').join('')+'</ul>'; }).catch(e=>{ console.error(e); result.textContent='List error'; }); });
+})();
+ </script>
+ </body>
+ </html>

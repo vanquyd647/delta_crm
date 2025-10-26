@@ -250,39 +250,64 @@ public class AuthController {
         // ✅ Handle both UserDetails and OAuth2User
         Object principal = auth.getPrincipal();
         String username;
-        Object authorities;
+        Object authoritiesObj;
         String authType;
 
         if (principal instanceof UserDetails) {
             // 🔹 Regular login (username/password)
             UserDetails userDetails = (UserDetails) principal;
             username = userDetails.getUsername();
-            authorities = userDetails.getAuthorities();
+            authoritiesObj = userDetails.getAuthorities();
             authType = "UserDetails (Regular Login)";
         } else if (principal instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser) {
             // 🔹 OAuth2 OIDC login (Google, etc.)
             org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser =
                     (org.springframework.security.oauth2.core.oidc.user.OidcUser) principal;
             username = oidcUser.getName(); // hoặc oidcUser.getEmail()
-            authorities = oidcUser.getAuthorities();
+            authoritiesObj = oidcUser.getAuthorities();
             authType = "OidcUser (OAuth2 Login)";
         } else if (principal instanceof org.springframework.security.oauth2.core.user.OAuth2User) {
             // 🔹 OAuth2 login (GitHub, etc.)
             org.springframework.security.oauth2.core.user.OAuth2User oauth2User =
                     (org.springframework.security.oauth2.core.user.OAuth2User) principal;
             username = oauth2User.getName();
-            authorities = oauth2User.getAuthorities();
+            authoritiesObj = oauth2User.getAuthorities();
             authType = "OAuth2User (OAuth2 Login)";
         } else {
             // 🔹 Unknown principal type
             username = principal.toString();
-            authorities = auth.getAuthorities();
+            authoritiesObj = auth.getAuthorities();
             authType = "Unknown (" + principal.getClass().getSimpleName() + ")";
+        }
+
+        // Normalize authorities into a list of String roles so frontend can easily check for ROLE_ADMIN
+        java.util.List<String> authorityStrings = new java.util.ArrayList<>();
+        try {
+            if (authoritiesObj instanceof java.lang.Iterable) {
+                for (Object a : (java.lang.Iterable<?>) authoritiesObj) {
+                    if (a == null) continue;
+                    // If it's a GrantedAuthority, call getAuthority(), otherwise toString()
+                    if (a instanceof org.springframework.security.core.GrantedAuthority) {
+                        String authName = ((org.springframework.security.core.GrantedAuthority) a).getAuthority();
+                        if (authName != null) authorityStrings.add(authName);
+                    } else {
+                        authorityStrings.add(a.toString());
+                    }
+                }
+            } else if (authoritiesObj != null) {
+                authorityStrings.add(authoritiesObj.toString());
+            }
+        } catch (Exception e) {
+            // fallback: try toString
+            try {
+                if (authoritiesObj != null) authorityStrings.add(authoritiesObj.toString());
+            } catch (Exception ignored) {}
         }
 
         Map<String, Object> userData = Map.of(
                 "username", username,
-                "authorities", authorities,
+                // expose a simple list of strings for client-side checks
+                "authorities", authorityStrings,
                 "tokenSource", tokenSource,
                 "authenticated", true,
                 "authType", authType,

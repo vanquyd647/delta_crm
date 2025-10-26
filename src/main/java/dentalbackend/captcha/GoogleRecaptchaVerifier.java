@@ -11,10 +11,10 @@ import java.util.Map;
 
 @Component
 public class GoogleRecaptchaVerifier implements CaptchaVerifier {
-    @Value("${RECAPTCHA_SECRET}")
+    @Value("${app.recaptcha.secret}")
     private String recaptchaSecret;
 
-    @Value("${RECAPTCHA_MIN_SCORE:0.5}")
+    @Value("${app.recaptcha.min-score:0.5}")
     private double minScore;
 
     private final RestTemplate restTemplate = new RestTemplate();
@@ -42,4 +42,3 @@ public class GoogleRecaptchaVerifier implements CaptchaVerifier {
         }
     }
 }
-

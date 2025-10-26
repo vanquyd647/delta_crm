@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Admin Pages</title>
+<style>body{font-family:Arial, Helvetica, sans-serif;margin:24px}ul{line-height:1.8}</style>
+</head>
+<body>
+<!-- admin: redirect to the dedicated dashboard page which shows counts and recent items -->
+<div id="adminNavPlaceholder"></div>
+<script>
+  // load admin navbar then redirect to the dashboard view
+  fetch('/fragments/admin-navbar.html').then(r=>r.text()).then(t=>{ document.getElementById('adminNavPlaceholder').innerHTML = t; }).catch(()=>{}).finally(()=>{
+    // Use a short delay to ensure nav is visible before redirecting
+    setTimeout(()=>{
+      if (window.location.pathname === '/admin' || window.location.pathname === '/admin/') {
+        window.location.href = '/admin/dashboard';
+      }
+    }, 120);
+  });
+</script>
+
+<noscript>
+  <p>JavaScript is disabled: <a href="/admin/dashboard">Open Admin Dashboard</a></p>
+</noscript>
+</body>
+</html>

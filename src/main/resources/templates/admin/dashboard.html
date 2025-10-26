@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <style>
+        body{font-family:Arial, sans-serif;background:#f6f8fa;margin:0;padding:24px}
+        header{display:flex;justify-content:space-between;align-items:center}
+        nav a{margin-right:12px;color:#3498db;text-decoration:none}
+        .cards{display:flex;gap:16px;margin-top:24px}
+        .card{background:#fff;padding:16px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.05);flex:1}
+        table{width:100%;border-collapse:collapse}
+        table th,table td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+    </style>
+</head>
+<body>
+<header>
+    <h1>Admin Dashboard</h1>
+    <!-- use shared admin navbar fragment for consistent nav across admin pages -->
+    <div id="adminNavPlaceholder" aria-hidden="false"></div>
+    <script>
+      // load the shared navbar fragment (static HTML)
+      fetch('/fragments/admin-navbar.html').then(r=>r.text()).then(t=>{ document.getElementById('adminNavPlaceholder').innerHTML = t; }).catch(()=>{
+        // fallback: minimal nav
+        document.getElementById('adminNavPlaceholder').innerHTML = '<nav><a href="/admin/services">Dịch vụ</a> <a href="/admin/dentists">Nha sĩ</a> <a href="/admin/appointments">Lịch hẹn</a> <a href="/">Trang chủ</a></nav>';
+      });
+    </script>
+</header>
+<main>
+    <div class="cards">
+        <div class="card">
+            <h3 id="servicesCount">Dịch vụ: <span th:text="${servicesCount}" th:if="${servicesCount!=null}">...</span><span th:unless="${servicesCount!=null}">...</span></h3>
+            <p>Quản lý dịch vụ</p>
+        </div>
+        <div class="card">
+            <h3 id="dentistsCount">Nha sĩ: <span th:text="${dentistsCount}" th:if="${dentistsCount!=null}">...</span><span th:unless="${dentistsCount!=null}">...</span></h3>
+            <p>Quản lý nha sĩ</p>
+        </div>
+        <div class="card">
+            <h3 id="appointmentsCount">Lịch hẹn: <span th:text="${appointmentsCount}" th:if="${appointmentsCount!=null}">...</span><span th:unless="${appointmentsCount!=null}">...</span></h3>
+            <p>Quản lý lịch hẹn</p>
+        </div>
+    </div>
+    <section style="margin-top:24px">
+        <h2>Gần đây</h2>
+        <div id="recentList">
+            <ul th:if="${recentAppointments!=null}">
+                <li th:each="a : ${recentAppointments}" th:text="${'#' + a.id + ' - ' + (a.customer!=null? (a.customer.fullName?:a.customer.username) : '') + ' - ' + (a.scheduledTime!=null? a.scheduledTime : '')}"></li>
+            </ul>
+            <div th:if="${recentAppointments==null}">Đang tải...</div>
+            <div th:if="${recentAppointments != null and #lists.isEmpty(recentAppointments)}">Không có lịch hẹn gần đây</div>
+        </div>
+    </section>
+</main>
+</body>
+</html>

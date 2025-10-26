@@ -38,11 +38,31 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((req, res, e) -> {
+                    try {
+                        String accept = req.getHeader("Accept");
+                        // If browser expects HTML, redirect to login page instead of returning JSON
+                        if (accept != null && accept.contains("text/html")) {
+                            res.sendRedirect("/login");
+                            return;
+                        }
+                    } catch (Exception exx) {
+                        // fallthrough to JSON response
+                    }
                     res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     res.setContentType("application/json;charset=UTF-8");
                     res.getWriter().write("{\"error\":\"unauthorized\"}");
                 })
                 .accessDeniedHandler((req, res, e) -> {
+                    try {
+                        String accept = req.getHeader("Accept");
+                        if (accept != null && accept.contains("text/html")) {
+                            // Forbid: show simple forbidden page or redirect to index
+                            res.sendRedirect("/login");
+                            return;
+                        }
+                    } catch (Exception exx) {
+                        // fallthrough
+                    }
                     res.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     res.setContentType("application/json;charset=UTF-8");
                     res.getWriter().write("{\"error\":\"forbidden\"}");
@@ -55,7 +75,22 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/swagger-resources/**",
-                    "/webjars/**"
+                    "/webjars/**",
+                    "/",
+                    "/index",
+                    "/consultation",
+                    "/booking",
+                    "/appointments",
+                    "/appointment-assign",
+                    "/appointment-assign/**",
+                    "/login",
+                    "/register",
+                    "/forgot-password",
+                    "/reset-password",
+                    "/css/**",
+                    "/fragments/**",
+                    "/js/**",
+                    "/images/**"
                 ).permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
@@ -64,6 +99,9 @@ public class SecurityConfig {
                     .requestMatchers("/api/appointments/**").permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/services/**").permitAll()
+                // Allow loading admin HTML pages (GET) so the UI can render and then check auth via JS
+                .requestMatchers(HttpMethod.GET, "/admin/**").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth -> oauth
